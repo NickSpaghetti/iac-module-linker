@@ -1,7 +1,7 @@
 {
-    "name": "github-ssh-to-uri-chrome-extension",
+    "name": "iac-module-linker",
     "version": "1.0.0",
-    "description": "",
+    "description": "Chrome extension that converts Terraform module sources into clickable links to the module definition page.",
     "main": "index.js",
     "engines": {
         "node": ">=24"

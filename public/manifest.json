@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "Github Terraform Sources To Url",
-    "description": "Converts Terraform modules sources on github to clickable links that take you to the module definition page.",
+    "name": "IaC Module Linker",
+    "description": "Converts Terraform module sources into clickable links that take you to the module definition page. Works on GitHub.",
     "permissions": ["tabs", "scripting", "activeTab", "storage"],
     "host_permissions": ["https://github.com/*", "https://registry.terraform.io/*"],
     "version": "0.0.0.17",
