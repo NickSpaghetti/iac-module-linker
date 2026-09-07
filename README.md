@@ -14,10 +14,14 @@ A new Chrome Web Store listing is pending. Until it is live, build from source w
 
 When the page loads the extension will try and parse the sources of your modules in your terraform file from an ssh to a clickable uri. The extension supports parsing `.tf` and `.hcl` file types. You must grant the extensions permission to have access to [github](https://github.com). See the [Devloping Locally Section](#developing-locally)
 
+![Module sources in a .tf file on GitHub rendered as clickable links](docs/screenshots/sshUrlATag.png)
+
 ### viewing all sources
 
 Navigate to a GitHub page where there is Terraform code and click on the extension. If no modules are found then `No Moduels found` will be displayed on the pop-up.
 If a modules is found then a table displaying the module name and source type will be shown. The module name is a hyperlink to the github page of that module.
+
+![Extension popup listing each module found on the page next to its source type](docs/screenshots/mutiLinkPopup.png)
 
 # How to contribute
 
