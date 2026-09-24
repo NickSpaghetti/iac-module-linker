@@ -201,7 +201,7 @@ async function main() {
                     "set",
                     "CHROME_REFRESH_TOKEN",
                     "--repo",
-                    "NickSpaghetti/Github-SSH-To-URI-Chrome-Extension",
+                    "NickSpaghetti/iac-module-linker",
                 ],
                 { input: refreshToken, stdio: ["pipe", "inherit", "inherit"] },
             );

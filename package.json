@@ -35,15 +35,15 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/NickSpaghetti/Github-SSH-To-URI-Chrome-Extension.git"
+        "url": "git+https://github.com/NickSpaghetti/iac-module-linker.git"
     },
     "keywords": [],
     "author": "Nick Spaghetti",
     "license": "GPL-3.0",
     "bugs": {
-        "url": "https://github.com/NickSpaghetti/Github-SSH-To-URI-Chrome-Extension/issues"
+        "url": "https://github.com/NickSpaghetti/iac-module-linker/issues"
     },
-    "homepage": "https://github.com/NickSpaghetti/Github-SSH-To-URI-Chrome-Extension#readme",
+    "homepage": "https://github.com/NickSpaghetti/iac-module-linker#readme",
     "dependencies": {
         "@emotion/react": "^11.10.5",
         "@emotion/styled": "^11.10.5",
