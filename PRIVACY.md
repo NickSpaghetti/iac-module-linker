@@ -47,9 +47,9 @@ sold, or used for any unrelated purpose.
 ## Source
 
 The extension is open source under GPL-3.0. Every claim above can be verified
-in the source: https://github.com/NickSpaghetti/Github-SSH-To-URI-Chrome-Extension
+in the source: https://github.com/NickSpaghetti/iac-module-linker
 
 ## Contact
 
 Open an issue at
-https://github.com/NickSpaghetti/Github-SSH-To-URI-Chrome-Extension/issues
+https://github.com/NickSpaghetti/iac-module-linker/issues

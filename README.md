@@ -1,6 +1,6 @@
 # <img src="public/icons/icon96.png" align="absmiddle"> IaC Module Linker
 
-![Tests](https://github.com/NickSpaghetti/Github-SSH-To-URI-Chrome-Extension/actions/workflows/cron-test.yml/badge.svg)
+![Tests](https://github.com/NickSpaghetti/iac-module-linker/actions/workflows/cron-test.yml/badge.svg)
 
 ## Installing the Extension
 
@@ -42,7 +42,7 @@ Before you submit your pull request consider the following guidelines:
 Clone this repository and run.
 
 ```
-cd Github-SSH-To-URI-Chrome-Extension
+cd iac-module-linker
 yarn install
 yarn build
 ```
