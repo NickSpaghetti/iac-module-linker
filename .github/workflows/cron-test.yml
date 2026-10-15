@@ -67,3 +67,13 @@ jobs:
         # Extensions need a full browser, so the run is headed under a
         # virtual display rather than headless.
         run: xvfb-run -a pnpm e2e
+
+      # Screenshots, traces and extension logs from the failing tests, so a
+      # flake against live GitHub can be diagnosed after the fact.
+      - name: Upload end to end test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-test-results
+          path: tests/e2e/test-results/
+          retention-days: 14
