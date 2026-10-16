@@ -68,6 +68,22 @@ jobs:
         # virtual display rather than headless.
         run: xvfb-run -a pnpm e2e
 
+      # A GitLab test skips when gitlab.com rate limits the runner, and writes why
+      # to this report, so a skip shows on the run instead of passing silently.
+      - name: Report GitLab rate limiting
+        if: ${{ always() }}
+        working-directory: tests/e2e
+        run: |
+          report=test-results/gitlab-rate-limited.txt
+          if [ -f "$report" ]; then
+            echo "::warning title=GitLab rate limited::$(wc -l < "$report") GitLab end to end tests were skipped, see the run summary"
+            {
+              echo "### GitLab rate limited the end to end run"
+              echo
+              sed 's/^/- /' "$report"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       # Screenshots, traces and extension logs from the failing tests, so a
       # flake against live GitHub can be diagnosed after the fact.
       - name: Upload end to end test results
