@@ -5,6 +5,7 @@ import { classify } from "../../../src/domain/moduleSource/Classify";
 import { stubModuleSourceLinker } from "./RegistryStubs";
 import { MODULE_SOURCE_CORPUS } from "../fixtures/module-sources";
 import { Nullable } from "../../../src/types/Nullable";
+import { DeclarationBlock } from "../../../src/types/ParsedDeclaration";
 import { isSafeHttpUrl } from "../../../src/util/UrlSafety";
 
 const linker = stubModuleSourceLinker();
@@ -12,16 +13,13 @@ const linker = stubModuleSourceLinker();
 const FIXTURES = "https://github.com/NickSpaghetti/iac-module-linker-fixtures";
 const PAGE = new URL(`${FIXTURES}/blob/main/01-local-paths.tf`);
 
-/**
- * Builds the link a source resolves to.
- * @param raw The source exactly as an author wrote it.
- * @param moduleName The name the block was given.
- * @param version The constraint the block declared.
- * @param page The page the source was declared on.
- * @returns The link, or null where the source has nowhere to point.
- */
-const linkAsync = async (raw: string, moduleName = "m", version = "", page = PAGE) =>
-    (await linker.linkAsync(classify(detect(split(raw))), moduleName, version, page)).url;
+// The link a source, written exactly as an author wrote it, resolves to.
+const linkAsync = async (
+    raw: string,
+    block: DeclarationBlock = "module",
+    version = "",
+    page = PAGE,
+) => (await linker.linkAsync(classify(detect(split(raw))), block, version, page)).url;
 
 /**
  * Builds the link for each of a set of sources.
@@ -75,7 +73,7 @@ describe("Given a local path", () => {
 
             // Act
             const urls = await Promise.all(
-                pages.map((page) => linkAsync("./modules/vpc", "m", "", new URL(page))),
+                pages.map((page) => linkAsync("./modules/vpc", "module", "", new URL(page))),
             );
 
             // Assert
@@ -93,7 +91,7 @@ describe("Given a local path", () => {
             const page = new URL("https://github.com/acme/infra/blob/main/envs/tree/main.tf");
 
             // Act
-            const url = await linkAsync("./blob/vpc", "m", "", page);
+            const url = await linkAsync("./blob/vpc", "module", "", page);
 
             // Assert
             expect<Nullable<string>>(url).toBe(
@@ -109,7 +107,7 @@ describe("Given a local path", () => {
             const page = new URL(`${FIXTURES}/blob/main/nested/deep/consumer.tf`);
 
             // Act
-            const url = await linkAsync(raw, "m", "", page);
+            const url = await linkAsync(raw, "module", "", page);
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${FIXTURES}/tree/main/modules/vpc`);
@@ -125,7 +123,7 @@ describe("Given a local path", () => {
             const raw = "../../modules/vpc";
 
             // Act
-            const url = await linkAsync(raw, "m", "", page);
+            const url = await linkAsync(raw, "module", "", page);
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${gitlabFixtures}/-/tree/main/modules/vpc`);
@@ -136,7 +134,7 @@ describe("Given a local path", () => {
             const nested = new URL("https://gitlab.com/blob/infra/repo/-/blob/main/main.tf");
 
             // Act
-            const url = await linkAsync("./modules/vpc", "m", "", nested);
+            const url = await linkAsync("./modules/vpc", "module", "", nested);
 
             // Assert
             expect<Nullable<string>>(url).toBe(
@@ -149,7 +147,7 @@ describe("Given a local path", () => {
             const raw = "../../modules/vpc/main.tf";
 
             // Act
-            const url = await linkAsync(raw, "m", "", page);
+            const url = await linkAsync(raw, "module", "", page);
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${gitlabFixtures}/-/blob/main/modules/vpc/main.tf`);
@@ -353,7 +351,7 @@ describe("Given a registry source", () => {
             const raw = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints";
 
             // Act
-            const url = await linkAsync(raw, "m", "6.7.3");
+            const url = await linkAsync(raw, "module", "6.7.3");
 
             // Assert
             expect<Nullable<string>>(url).toBe(
@@ -368,7 +366,7 @@ describe("Given a registry source", () => {
             const raw = "random";
 
             // Act
-            const url = await linkAsync(raw, "required_providers.random", "");
+            const url = await linkAsync(raw, "required_providers", "");
 
             // Assert
             expect<boolean>(url !== null).toBe(true);
@@ -450,7 +448,7 @@ describe("Given every source in the corpus", () => {
                     row,
                     actual: await linkAsync(
                         row.source,
-                        row.moduleName,
+                        row.block,
                         row.version,
                         new URL(row.pageUrl),
                     ),
@@ -479,7 +477,7 @@ describe("Given an OpenTofu registry source", () => {
     describe("When the version is pinned to one the registry publishes", () => {
         test("Then I expect it browsed on search.opentofu.org at that version", async () => {
             // Act
-            const url = await linkAsync(VPC, "m", "6.7.3");
+            const url = await linkAsync(VPC, "module", "6.7.3");
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${SEARCH}/6.7.3`);
@@ -487,7 +485,7 @@ describe("Given an OpenTofu registry source", () => {
 
         test("Then I expect a short pin padded to the published form", async () => {
             // Act
-            const url = await linkAsync(VPC, "m", "6.0");
+            const url = await linkAsync(VPC, "module", "6.0");
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${SEARCH}/6.0.0`);
@@ -497,7 +495,7 @@ describe("Given an OpenTofu registry source", () => {
     describe("When the version is pinned to one the registry does not publish", () => {
         test("Then I expect latest rather than a link that 404s", async () => {
             // Act
-            const url = await linkAsync(VPC, "m", "99.0.0");
+            const url = await linkAsync(VPC, "module", "99.0.0");
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${SEARCH}/latest`);
@@ -516,7 +514,7 @@ describe("Given an OpenTofu registry source", () => {
             const linked = await Promise.all(
                 cases.map(async ({ version }) => ({
                     version,
-                    url: await linkAsync(VPC, "m", version),
+                    url: await linkAsync(VPC, "module", version),
                 })),
             );
 
@@ -528,7 +526,7 @@ describe("Given an OpenTofu registry source", () => {
     describe("When there is no version at all", () => {
         test("Then I expect latest, which already names the newest", async () => {
             // Act
-            const url = await linkAsync(VPC, "m", "");
+            const url = await linkAsync(VPC, "module", "");
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${SEARCH}/latest`);
@@ -538,7 +536,7 @@ describe("Given an OpenTofu registry source", () => {
     describe("When the constraint is not one terraform writes", () => {
         test("Then I expect latest rather than npm semantics", async () => {
             // Act
-            const url = await linkAsync(VPC, "m", "^6.0.0");
+            const url = await linkAsync(VPC, "module", "^6.0.0");
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${SEARCH}/latest`);
@@ -551,7 +549,7 @@ describe("Given an OpenTofu registry source", () => {
             const raw = "registry.opentofu.org/hashicorp/aws";
 
             // Act
-            const url = await linkAsync(raw, "required_providers.aws", "5.100.0");
+            const url = await linkAsync(raw, "required_providers", "5.100.0");
 
             // Assert
             expect<Nullable<string>>(url).toBe(
@@ -566,7 +564,7 @@ describe("Given an OpenTofu registry source", () => {
             const raw = `${VPC}//modules/vpc-endpoints`;
 
             // Act
-            const url = await linkAsync(raw, "m", "6.7.3");
+            const url = await linkAsync(raw, "module", "6.7.3");
 
             // Assert
             expect<Nullable<string>>(url).toBe(`${SEARCH}/6.7.3/submodule/vpc-endpoints`);
@@ -579,7 +577,7 @@ describe("Given an OpenTofu registry source", () => {
             const raw = "registry.example.com/corp/networking/aws";
 
             // Act
-            const url = await linkAsync(raw, "m", "");
+            const url = await linkAsync(raw, "module", "");
 
             // Assert
             expect<Nullable<string>>(url).toBe("https://registry.example.com/corp/networking/aws");
@@ -590,15 +588,8 @@ describe("Given an OpenTofu registry source", () => {
 describe("Given the version the popup shows beside a constraint", () => {
     const VPC = "registry.opentofu.org/terraform-aws-modules/vpc/aws";
 
-    /**
-     * Reads the version a source resolved to.
-     * @param raw The source exactly as an author wrote it.
-     * @param moduleName The name the block was given.
-     * @param version The constraint the block declared.
-     * @returns The resolved version, or an empty string where none was.
-     */
-    const resolvedVersion = async (raw: string, moduleName = "m", version = "") =>
-        (await linker.linkAsync(classify(detect(split(raw))), moduleName, version, PAGE))
+    const resolvedVersion = async (raw: string, block: DeclarationBlock = "module", version = "") =>
+        (await linker.linkAsync(classify(detect(split(raw))), block, version, PAGE))
             .resolvedVersion;
 
     describe("When a registry source resolves a range", () => {
@@ -606,7 +597,7 @@ describe("Given the version the popup shows beside a constraint", () => {
             // Act
             const resolved = await resolvedVersion(
                 "terraform-aws-modules/vpc/aws",
-                "m",
+                "module",
                 ">= 5.0, < 6.0",
             );
 
@@ -618,7 +609,11 @@ describe("Given the version the popup shows beside a constraint", () => {
     describe("When a registry source pins a version", () => {
         test("Then I expect that version", async () => {
             // Act
-            const resolved = await resolvedVersion("terraform-aws-modules/vpc/aws", "m", "5.4.0");
+            const resolved = await resolvedVersion(
+                "terraform-aws-modules/vpc/aws",
+                "module",
+                "5.4.0",
+            );
 
             // Assert
             expect<string>(resolved).toBe("5.4.0");
@@ -628,7 +623,7 @@ describe("Given the version the popup shows beside a constraint", () => {
     describe("When an OpenTofu pin is confirmed published", () => {
         test("Then I expect that version", async () => {
             // Act
-            const resolved = await resolvedVersion(VPC, "m", "6.7.3");
+            const resolved = await resolvedVersion(VPC, "module", "6.7.3");
 
             // Assert
             expect<string>(resolved).toBe("6.7.3");
@@ -638,7 +633,7 @@ describe("Given the version the popup shows beside a constraint", () => {
     describe("When an OpenTofu range resolves", () => {
         test("Then I expect the version it selected", async () => {
             // Act
-            const resolved = await resolvedVersion(VPC, "m", "~> 5.0");
+            const resolved = await resolvedVersion(VPC, "module", "~> 5.0");
 
             // Assert
             expect<string>(resolved).toBe("5.21.0");
@@ -665,7 +660,7 @@ describe("Given the version the popup shows beside a constraint", () => {
 
             // Act
             const resolved = await Promise.all(
-                versions.map((version) => resolvedVersion(VPC, "m", version)),
+                versions.map((version) => resolvedVersion(VPC, "module", version)),
             );
 
             // Assert
@@ -730,12 +725,7 @@ describe("Given a source whose locator is not a browsable address", () => {
             const built = await Promise.all(
                 MODULE_SOURCE_CORPUS.map(async (row) => ({
                     id: row.id,
-                    url: await linkAsync(
-                        row.source,
-                        row.moduleName,
-                        row.version,
-                        new URL(row.pageUrl),
-                    ),
+                    url: await linkAsync(row.source, row.block, row.version, new URL(row.pageUrl)),
                 })),
             );
             const unsafe = built

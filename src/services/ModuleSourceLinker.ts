@@ -4,12 +4,10 @@ import { TerraformVersionService } from "./TerraformVersionService";
 import { NO_LINK, resolverFor } from "../domain/moduleSource/ModuleSourceResolvers";
 import { LinkContext, VersionLookup } from "../types/LinkContext";
 import { ModuleLink } from "../types/ModuleLink";
+import { DeclarationBlock } from "../types/ParsedDeclaration";
 import { logRecovered } from "../util/Log";
 
-/**
- * Builds the browse url for a classified module source. Which builder runs is
- * decided by the shared resolver table, not by a second priority list.
- */
+/** Builds the browse url for a classified module source, from the shared resolver table. */
 export class ModuleSourceLinker {
     constructor(
         private readonly terraformVersionService: TerraformVersionService,
@@ -21,14 +19,14 @@ export class ModuleSourceLinker {
      *
      * A defect in a pure link builder is not caught here. It should surface.
      * @param source A classified module source.
-     * @param moduleName The block name, which decides the provider or module route.
+     * @param block The type of block the source is declared in.
      * @param versionConstraint The block's version constraint, or "".
      * @param pageUrl The page the source was read from, for relative paths.
      * @returns The browse url and the version a registry resolved, if any.
      */
     public async linkAsync(
         source: ModuleSource,
-        moduleName: string,
+        block: DeclarationBlock,
         versionConstraint: string,
         pageUrl: URL,
     ): Promise<ModuleLink> {
@@ -36,36 +34,36 @@ export class ModuleSourceLinker {
         if (build === null) {
             return NO_LINK;
         }
-        return await build(source, this.contextFor(moduleName, versionConstraint, pageUrl));
+        return await build(source, this.contextFor(block, versionConstraint, pageUrl));
     }
 
-    private contextFor(moduleName: string, versionConstraint: string, pageUrl: URL): LinkContext {
+    private contextFor(
+        block: DeclarationBlock,
+        versionConstraint: string,
+        pageUrl: URL,
+    ): LinkContext {
         return {
-            moduleName: moduleName,
+            block: block,
             versionConstraint: versionConstraint,
             pageUrl: pageUrl,
-            resolveVersionAsync: contained((address, route, constraint) =>
-                this.terraformVersionService.selectVersionAsync(address, route, constraint),
+            resolveVersionAsync: contained((query) =>
+                this.terraformVersionService.selectVersionAsync(query),
             ),
-            resolveOpenTofuVersionAsync: contained((address, route, constraint) =>
-                this.openTofuVersionService.selectVersionAsync(address, route, constraint),
+            resolveOpenTofuVersionAsync: contained((query) =>
+                this.openTofuVersionService.selectVersionAsync(query),
             ),
         };
     }
 }
 
-/**
- * The registry is the only thing in a link build that fails legitimately, so
- * it is the only thing wrapped. An unreachable registry reads the same as one
- * that names no version: null, and the resolver row decides what that means.
- */
+/** Wraps a version lookup so a registry that fails reads as one that names no version. */
 const contained =
     (lookup: VersionLookup): VersionLookup =>
-    async (address, target, versionConstraint) => {
+    async (query) => {
         try {
-            return await lookup(address, target, versionConstraint);
+            return await lookup(query);
         } catch (error) {
-            logRecovered(`could not resolve a version for ${address}`, error);
+            logRecovered("could not resolve a version", { address: query.address, error });
             return null;
         }
     };

@@ -1,3 +1,4 @@
+/** The types of file the parser reads. */
 export enum HclFileTypes {
     tf = "tf",
     hcl = "hcl",
@@ -6,11 +7,7 @@ export enum HclFileTypes {
     tofuJson = "tofu.json",
 }
 
-/**
- * Longest suffix first. OpenTofu 1.8 added `.tofu`, and both languages have a
- * JSON variant whose second extension the old lastIndexOf(".") read as the
- * whole type.
- */
+/** Each HCL file suffix and the type it marks, longest first. */
 export const HCL_FILE_SUFFIXES: ReadonlyArray<readonly [string, HclFileTypes]> = [
     [".tofu.json", HclFileTypes.tofuJson],
     [".tf.json", HclFileTypes.tfJson],

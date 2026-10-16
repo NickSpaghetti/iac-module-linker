@@ -9,20 +9,13 @@ import { PlacedSourceLink, SourceLinks } from "../types/SourceLinks";
 export const toSourceLinks = (modules: readonly DisplayModule[]): SourceLinks => {
     const placed = new Map<number, PlacedSourceLink[]>();
     for (const module of modules) {
-        if (
-            module.resolvedUrl === null ||
-            module.sourceLine === null ||
-            module.sourceColumn === null
-        ) {
+        if (module.resolvedUrl === null || module.sourcePosition === null) {
             continue;
         }
-        const onLine = placed.get(module.sourceLine) ?? [];
-        onLine.push({
-            column: module.sourceColumn,
-            written: module.writtenSource,
-            url: module.resolvedUrl,
-        });
-        placed.set(module.sourceLine, onLine);
+        const { line, column } = module.sourcePosition;
+        const onLine = placed.get(line) ?? [];
+        onLine.push({ column: column, written: module.writtenSource, url: module.resolvedUrl });
+        placed.set(line, onLine);
     }
     return placed;
 };

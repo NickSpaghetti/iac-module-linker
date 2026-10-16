@@ -54,7 +54,7 @@ export class GitLabPageDataAccess implements IPageDataAccess {
      * apart from a stale one.
      */
     public readCommitSha(): Nullable<string> {
-        const link = document.querySelector(COMMIT_LINK) as Nullable<HTMLAnchorElement>;
+        const link = document.querySelector(COMMIT_LINK);
         const sha = link?.getAttribute("href")?.split(COMMIT_SEPARATOR)[1];
         return sha === undefined || sha === "" ? null : sha;
     }
@@ -80,13 +80,13 @@ export class GitLabPageDataAccess implements IPageDataAccess {
         try {
             const response = await this.fetchAsync(rawUrl);
             if (!response.ok) {
-                logRecovered(`could not fetch the file being viewed: ${response.status}`);
+                logRecovered("could not fetch the file being viewed", { status: response.status });
                 return null;
             }
             const text = await response.text();
             return text === "" ? null : text;
         } catch (error) {
-            logRecovered("could not fetch the file being viewed", error);
+            logRecovered("could not fetch the file being viewed", { error });
             return null;
         }
     }

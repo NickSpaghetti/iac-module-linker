@@ -1,3 +1,4 @@
+/** The scripts that send the content script a message. */
 export const SENDERS = {
     BACKGROUND: "background",
     POPUP: "popup",
@@ -15,10 +16,5 @@ export type PopupRequest = {
     readonly tabUrl: string;
 };
 
-/**
- * What the background and popup scripts may send the content script. The
- * senders are typed against it and the guards in `TabMessageGuards` narrow
- * back to it, so the contract is checked at both ends rather than only on
- * arrival.
- */
+/** What the background and popup scripts may send the content script. */
 export type TabMessage = BackgroundRefresh | PopupRequest;

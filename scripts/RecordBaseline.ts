@@ -20,13 +20,7 @@ const AXES = [
     "gitlab",
 ];
 
-/**
- * Values a spec multiplies by `ceiling` to bound a measurement, rather than
- * comparing for equality. These are high water marks: re-recording on a quiet
- * run would otherwise tighten every gate until a normal run trips it, so a
- * lower measurement is reported and discarded. Lowering one deliberately
- * means editing the baseline by hand.
- */
+/** Axes kept as high water marks: a lower measurement is reported and discarded. */
 const CEILINGS = [
     "worker.residentMb",
     "userExperience.cpuSharePercent",
@@ -38,11 +32,7 @@ type Values = Record<string, unknown>;
 const isPlainObject = (value: unknown): value is Values =>
     typeof value === "object" && value !== null && !Array.isArray(value);
 
-/**
- * @param into The baseline as it stands.
- * @param from What the run measured.
- * @returns The two merged, with measured values winning.
- */
+/** Merges a run's measurements into the baseline, with measured values winning. */
 const merge = (into: Values, from: Values): Values => {
     const merged: Values = { ...into };
     for (const [key, value] of Object.entries(from)) {
@@ -53,11 +43,7 @@ const merge = (into: Values, from: Values): Values => {
     return merged;
 };
 
-/**
- * @param values Any nested object.
- * @param prefix The path walked so far.
- * @returns One entry per leaf, keyed by dotted path.
- */
+/** Lists every leaf of a nested object, keyed by dotted path. */
 const leaves = (values: Values, prefix = ""): Map<string, unknown> => {
     const flat = new Map<string, unknown>();
     for (const [key, value] of Object.entries(values)) {
@@ -82,9 +68,7 @@ const drift = (was: unknown, now: unknown): string => {
 };
 
 /**
- * Prose next to a number goes stale the moment the number is re-recorded,
- * and nothing detects it. Anything worth saying about an axis belongs in the
- * spec, beside the assertion, where review sees it.
+ * Removes every `note` field from the baseline.
  * @param node Any part of the baseline.
  */
 const stripNotes = (node: unknown): void => {
@@ -100,11 +84,7 @@ const at = (values: Values, path: string): unknown =>
         .split(".")
         .reduce<unknown>((node, key) => (isPlainObject(node) ? node[key] : undefined), values);
 
-/**
- * @param values The baseline being assembled.
- * @param path A dotted path into it.
- * @param value What to store there.
- */
+/** Stores a value at a dotted path whose parents already exist. */
 const put = (values: Values, path: string, value: unknown): void => {
     const keys = path.split(".");
     const last = keys.pop()!;
@@ -112,16 +92,11 @@ const put = (values: Values, path: string, value: unknown): void => {
     parent[last] = value;
 };
 
-/** Written by this script rather than by any axis, so never reported dead. */
+/** Keys this script writes itself. */
 const ASSEMBLER_KEYS = ["recorded"];
 
 /**
  * Finds baseline entries no benchmark mentions.
- *
- * A key that nothing records and nothing asserts is dead weight that reads as
- * a measurement. They arrive when an axis is renamed and the old name is
- * carried forward, which this script does by design for everything it was not
- * given.
  * @param values The assembled baseline.
  * @param benchmarkSource Every benchmark and helper, concatenated.
  * @returns The dotted paths that appear nowhere in the benchmarks.
@@ -190,8 +165,6 @@ const main = (): void => {
     }
     next.recorded = new Date().toISOString().slice(0, 10);
 
-    // Derived rather than measured: the fixtures are two files and their
-    // ratio is a property of the pair, not of the machine.
     const parse = next.parse as Values;
     const smallBytes = parse.smallBytes as number | undefined;
     const largeBytes = parse.largeBytes as number | undefined;

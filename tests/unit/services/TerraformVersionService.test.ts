@@ -16,11 +16,11 @@ describe("Given a constraint and the versions a registry publishes", () => {
             const constraint = ">= 5.0, < 6.0";
 
             // Act
-            const selected = await terraformVersionService.selectVersionAsync(
+            const selected = await terraformVersionService.selectVersionAsync({
                 address,
-                "provider",
-                constraint,
-            );
+                target: "provider",
+                versionConstraint: constraint,
+            });
 
             // Assert
             expect<string | null>(selected).toBe("5.100.0");
@@ -30,21 +30,25 @@ describe("Given a constraint and the versions a registry publishes", () => {
     describe("When there is no constraint", () => {
         test("Then I expect the newest published version, not the oldest", async () => {
             // Arrange
-            const cases: { address: string; kind: RegistryTarget; newest: string }[] = [
+            const cases: { address: string; target: RegistryTarget; newest: string }[] = [
                 {
                     address: "terraform-aws-modules/security-group/aws",
-                    kind: "module",
+                    target: "module",
                     newest: "6.0.0",
                 },
-                { address: "hashicorp/random", kind: "provider", newest: "3.9.1" },
+                { address: "hashicorp/random", target: "provider", newest: "3.9.1" },
             ];
 
             // Act
             const selected = await Promise.all(
-                cases.map(async ({ address, kind }) => ({
+                cases.map(async ({ address, target }) => ({
                     address,
-                    kind,
-                    newest: await terraformVersionService.selectVersionAsync(address, kind, ""),
+                    target,
+                    newest: await terraformVersionService.selectVersionAsync({
+                        address,
+                        target: target,
+                        versionConstraint: "",
+                    }),
                 })),
             );
 
@@ -60,11 +64,11 @@ describe("Given a constraint and the versions a registry publishes", () => {
             const constraint = "6.7.3";
 
             // Act
-            const selected = await terraformVersionService.selectVersionAsync(
+            const selected = await terraformVersionService.selectVersionAsync({
                 address,
-                "module",
-                constraint,
-            );
+                target: "module",
+                versionConstraint: constraint,
+            });
 
             // Assert
             expect<string | null>(selected).toBe("6.7.3");
@@ -78,11 +82,11 @@ describe("Given a constraint and the versions a registry publishes", () => {
             const constraint = ">= 99.0.0";
 
             // Act
-            const selected = await terraformVersionService.selectVersionAsync(
+            const selected = await terraformVersionService.selectVersionAsync({
                 address,
-                "provider",
-                constraint,
-            );
+                target: "provider",
+                versionConstraint: constraint,
+            });
 
             // Assert
             expect<string | null>(selected).toBe("3.9.1");

@@ -1,5 +1,6 @@
 import { expect } from "@jest/globals";
 import {
+    isTabMessage,
     shouldHandleMessage,
     isBackgroundRefresh,
     readTabUrl,
@@ -155,6 +156,23 @@ describe("Given a runtime message", () => {
             expect<boolean[]>(handled).toEqual(messages.map(() => false));
         });
     });
+
+    describe("When the popup names a GitHub tab but no tab id", () => {
+        test("Then I expect it rejected, because it is not a popup request", () => {
+            // Arrange
+            const tabUrl = "https://github.com/owner/repo/blob/main/main.tf";
+            const messages = [
+                { sender: SENDERS.POPUP, tabUrl },
+                { sender: SENDERS.POPUP, tabId: "1", tabUrl },
+            ];
+
+            // Act
+            const handled = messages.map(shouldHandleMessage);
+
+            // Assert
+            expect<boolean[]>(handled).toEqual(messages.map(() => false));
+        });
+    });
 });
 
 describe("Given a message to tell a refresh from a request", () => {
@@ -224,6 +242,24 @@ describe("Given a tab url to check the host of", () => {
 
             // Assert
             expect<boolean[]>(supported).toEqual(tabUrls.map(() => false));
+        });
+    });
+});
+
+describe("Given a well-formed popup request for a host the extension does not read", () => {
+    describe("When it is checked", () => {
+        test("Then I expect it a tab message, but not one to handle", () => {
+            // Arrange
+            const message = fromPopup("https://bitbucket.org/owner/repo");
+
+            // Act
+            const read = {
+                isTabMessage: isTabMessage(message),
+                handled: shouldHandleMessage(message),
+            };
+
+            // Assert
+            expect(read).toEqual({ isTabMessage: true, handled: false });
         });
     });
 });

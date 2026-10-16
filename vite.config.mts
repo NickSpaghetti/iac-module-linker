@@ -6,15 +6,24 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 const READABLE = process.env.IAC_READABLE === "1";
 const POPUP = "popup";
 const POPUP_TEMPLATE = fileURLToPath(new URL("src/popup-page/popup.html", import.meta.url));
+const MANIFEST_FILE = fileURLToPath(new URL("public/manifest.json", import.meta.url));
+
+type Manifest = {
+    content_scripts: [{ js: [string] }];
+    background: { service_worker: string };
+};
+
+// Named from the manifest, so a bundle is always the file chrome loads.
+const MANIFEST = JSON.parse(readFileSync(MANIFEST_FILE, "utf8")) as Manifest;
 
 /**
  * Builds one entry as a self contained iife.
  * @param source The entry's source file.
- * @param name The file name it ships as, without the extension.
+ * @param fileName The file name it ships as.
  * @param first Whether this build empties the output folder and copies `public/`.
  * @returns The environment that builds it.
  */
-const iife = (source: string, name: string, first = false): EnvironmentOptions => ({
+const iife = (source: string, fileName: string, first = false): EnvironmentOptions => ({
     consumer: "client",
     build: {
         emptyOutDir: first,
@@ -23,7 +32,7 @@ const iife = (source: string, name: string, first = false): EnvironmentOptions =
             input: source,
             output: {
                 format: "iife",
-                entryFileNames: `${name}.js`,
+                entryFileNames: fileName,
                 assetFileNames: "[name][extname]",
             },
         },
@@ -49,9 +58,10 @@ const popupPage = (): Plugin => ({
 // so a chunk shared between entries would break it. The popup builds first
 // because it empties the output folder.
 const ENVIRONMENTS = {
-    [POPUP]: iife("src/popup-page/index.ts", "index", true),
-    content: iife("src/contentscript.ts", "contentscript"),
-    background: iife("src/backgroundscript.ts", "backgroundscript"),
+    // Named by the script tag in popup.html, not by the manifest.
+    [POPUP]: iife("src/popup-page/index.ts", "index.js", true),
+    content: iife("src/contentscript.ts", MANIFEST.content_scripts[0].js[0]),
+    background: iife("src/backgroundscript.ts", MANIFEST.background.service_worker),
 };
 
 export default defineConfig({

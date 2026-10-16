@@ -1,13 +1,12 @@
 import { Nullable } from "../types/Nullable";
 import { SourceLinks } from "../types/SourceLinks";
 import { IPageWriter } from "./IPageWriter";
-import { LINE_ID_PREFIX, isLinked, lineNumberOf, linkPlacedSources } from "./PlacedSources";
+import { INERT, LINE_ID_PREFIX, isLinked, lineNumberOf, linkPlacedSources } from "./PlacedSources";
 
 // GitLab ids each rendered line `LC` and its 1-based line number, on a `.line`
 // element. Which element and which token classes depend on the highlighter,
 // so a source is found by the line and column the parser read it at.
 const LINE = `.line[id^="${LINE_ID_PREFIX}"]`;
-const INERT = "inert";
 const ANCHOR_ID_PREFIX = "GitlabTerraformSourceUrl";
 const ANCHOR = `a[id^="${ANCHOR_ID_PREFIX}"]`;
 

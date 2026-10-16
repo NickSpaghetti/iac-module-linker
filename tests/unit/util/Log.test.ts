@@ -12,13 +12,10 @@ afterEach(() => {
 });
 
 describe("Given a recovered failure", () => {
-    describe("When it has no error", () => {
-        test("Then I expect the prefixed message at the debug level", () => {
-            // Arrange
-            const message = "could not open session storage";
-
+    describe("When it has no error and no context", () => {
+        test("Then I expect only the prefixed message, at the debug level", () => {
             // Act
-            logRecovered(message);
+            logRecovered("could not open session storage");
 
             // Assert
             expect(debug).toHaveBeenCalledWith(
@@ -28,16 +25,47 @@ describe("Given a recovered failure", () => {
     });
 
     describe("When it has an error", () => {
-        test("Then I expect the error's text after the message", () => {
+        test("Then I expect the error itself after the message, so its stack survives", () => {
             // Arrange
             const error = new TypeError("Failed to fetch");
 
             // Act
-            logRecovered("could not reach the registry", error);
+            logRecovered("could not reach the registry", { error });
 
             // Assert
             expect(debug).toHaveBeenCalledWith(
-                "[iac-module-linker] could not reach the registry: TypeError: Failed to fetch",
+                "[iac-module-linker] could not reach the registry",
+                error,
+            );
+        });
+    });
+
+    describe("When it has context and an error", () => {
+        test("Then I expect the context as an object, then the error", () => {
+            // Arrange
+            const error = new Error("registry down");
+
+            // Act
+            logRecovered("could not resolve a version", { address: "a/b/c", error });
+
+            // Assert
+            expect(debug).toHaveBeenCalledWith(
+                "[iac-module-linker] could not resolve a version",
+                { address: "a/b/c" },
+                error,
+            );
+        });
+    });
+
+    describe("When it has context and no error", () => {
+        test("Then I expect only the context after the message", () => {
+            // Act
+            logRecovered("could not fetch the file being viewed", { status: 429 });
+
+            // Assert
+            expect(debug).toHaveBeenCalledWith(
+                "[iac-module-linker] could not fetch the file being viewed",
+                { status: 429 },
             );
         });
     });

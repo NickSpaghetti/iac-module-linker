@@ -10,20 +10,7 @@ export type ModuleCacheStore = {
 };
 
 /**
- * Writes an entry, resetting the cache once if the write is refused.
- *
- * A refusal that is not recovered from means nothing is cached again for the
- * rest of the browser session, and every page reparses and re-resolves.
- * Dropping the generation is cheaper than tracking per entry lifetimes, and
- * the lifetime is bounded twice over, by the quota and by the session.
- *
- * Any refusal resets, not only one recognised as the quota. Chrome offers no
- * error code, so `isQuotaRefusal` reads a message, and a reset conditional on
- * that would go back to caching nothing the day the wording changes. An
- * unnecessary reset costs one generation, rebuilt lazily.
- *
- * Retried once and not in a loop. A second refusal straight after a reset is
- * something other than room, and a loop would turn it into a hang.
+ * Writes an entry, resetting the cache and retrying once if the write is refused.
  * @param store Where the entry is written.
  * @param key The entry to write.
  * @param entry The modules found on that page.
@@ -40,13 +27,13 @@ export const cacheModulesAsync = async (
     } catch (error) {
         const dropped = await store.clearPrefixAsync(MODULE_CACHE_PREFIX);
         if (isQuotaRefusal(error)) {
-            logRecovered(`session storage was full, dropped ${dropped} cached files`);
+            logRecovered("session storage was full, dropped the cached files", { dropped });
         } else {
-            logRecovered(`caching was refused, dropped ${dropped} cached files`, error);
+            logRecovered("caching was refused, dropped the cached files", { dropped, error });
         }
     }
 
     await store
         .setAsync(key, entry)
-        .catch((error) => logRecovered("could not cache modules after a reset", error));
+        .catch((error) => logRecovered("could not cache modules after a reset", { error }));
 };

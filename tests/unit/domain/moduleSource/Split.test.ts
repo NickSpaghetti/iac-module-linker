@@ -15,7 +15,6 @@ describe("Given a prefix", () => {
             // Assert
             expect<string>(source.prefix).toBe("git");
             expect<string>(source.locator).toBe("https://github.com/a/b.git");
-            expect<boolean>(hasFlag(source, MODULE_SOURCE_FLAGS.HasPrefix)).toBe(true);
         });
     });
 
@@ -84,7 +83,6 @@ describe("Given a source with no prefix", () => {
 
             // Assert
             expect<string>(source.prefix).toBe("");
-            expect<boolean>(hasFlag(source, MODULE_SOURCE_FLAGS.HasPrefix)).toBe(false);
         });
     });
 
@@ -186,7 +184,6 @@ describe("Given a revision selector", () => {
 
             // Assert
             expect<string>(source.ref).toBe("v1.0.0");
-            expect<boolean>(hasFlag(source, MODULE_SOURCE_FLAGS.HasRef)).toBe(true);
         });
     });
 

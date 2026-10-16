@@ -9,14 +9,19 @@ import { PATH_SEPARATOR } from "../../util/PathHelpers";
 import { BROWSE_LAYOUTS } from "./RepositoryHosts";
 import { SCHEME_SEPARATOR } from "./Split";
 
-const HTTP_SCHEMES = ["http", "https"];
+const HTTPS_SCHEME = "https";
+const HTTP_SCHEMES = ["http", HTTPS_SCHEME];
 const SOURCE_SCHEMES = { SSH: "ssh", OCI: "oci" };
 const ARCHIVE_PREFIXES = ["s3", "gcs"];
 const ARCHIVE_EXTENSIONS = [".zip", ".tar.gz", ".tar.bz2", ".tar.xz"];
 
-const HTTPS_SCHEME = HTTP_SCHEMES[1];
-
 const isHttpScheme = (scheme: string): boolean => HTTP_SCHEMES.includes(scheme);
+
+/** Marks a source rejected, dropping every flag set before the rejection. */
+const reject = (source: ModuleSource): ModuleSource => {
+    source.flags = MODULE_SOURCE_FLAGS.Unsupported;
+    return source;
+};
 
 const withLeadingSeparator = (path: string): string =>
     path.startsWith(PATH_SEPARATOR) ? path : `${PATH_SEPARATOR}${path}`;
@@ -29,7 +34,7 @@ const withLeadingSeparator = (path: string): string =>
 export const detect = (source: ModuleSource): ModuleSource => {
     const locator = source.locator;
     if (locator === "") {
-        return setFlag(source, MODULE_SOURCE_FLAGS.Unsupported);
+        return reject(source);
     }
 
     applyPrefix(source);
@@ -50,7 +55,7 @@ export const detect = (source: ModuleSource): ModuleSource => {
     }
 
     if (hasColonBeforePath(locator)) {
-        return setFlag(source, MODULE_SOURCE_FLAGS.Unsupported);
+        return reject(source);
     }
 
     return detectSchemeless(source, locator);
@@ -90,7 +95,7 @@ const readScheme = (locator: string): string => {
 
 type ScpParts = { user: string; host: string; path: string };
 
-/** `git@github.com:ns/repo.git`. Returns the parts so the scan is not repeated. */
+/** Splits an scp style address such as `git@github.com:ns/repo.git`. */
 const readScpParts = (locator: string): ScpParts | null => {
     const atAt = locator.indexOf("@");
     if (atAt === -1) {
@@ -111,7 +116,6 @@ const readScpParts = (locator: string): ScpParts | null => {
     };
 };
 
-/** Only the scheme rejection half. scp style is handled by readScpParts. */
 const hasColonBeforePath = (locator: string): boolean => {
     const colonAt = locator.indexOf(":");
     if (colonAt === -1) {
@@ -125,11 +129,11 @@ const hasColonBeforePath = (locator: string): boolean => {
 const detectSchemed = (source: ModuleSource, locator: string, scheme: string): ModuleSource => {
     const parsed = parseHost(locator);
     if (parsed === null) {
-        return setFlag(source, MODULE_SOURCE_FLAGS.Unsupported);
+        return reject(source);
     }
 
     if (parsed.user !== "" && scheme !== SOURCE_SCHEMES.SSH) {
-        return setFlag(source, MODULE_SOURCE_FLAGS.Unsupported);
+        return reject(source);
     }
 
     source.scheme = scheme;
@@ -159,7 +163,7 @@ const detectSchemed = (source: ModuleSource, locator: string, scheme: string): M
 const detectScp = (source: ModuleSource, parts: ScpParts): ModuleSource => {
     const parsed = parseHost(`${SOURCE_SCHEMES.SSH}${SCHEME_SEPARATOR}${parts.host}`);
     if (parsed === null) {
-        return setFlag(source, MODULE_SOURCE_FLAGS.Unsupported);
+        return reject(source);
     }
 
     source.scheme = SOURCE_SCHEMES.SSH;
@@ -180,7 +184,7 @@ const detectSchemeless = (source: ModuleSource, locator: string): ModuleSource =
 
     const parsed = parseHost(`${HTTPS_SCHEME}${SCHEME_SEPARATOR}${locator}`);
     if (parsed === null || parsed.user !== "" || isIpLiteral(parsed.host)) {
-        return setFlag(source, MODULE_SOURCE_FLAGS.Unsupported);
+        return reject(source);
     }
 
     source.host = parsed.host;
@@ -192,8 +196,6 @@ const detectSchemeless = (source: ModuleSource, locator: string): ModuleSource =
         return asRepository(source);
     }
 
-    // `git::` and `hg::` say outright what the source is, so an unknown host
-    // does not get to overrule them and call it a registry.
     if (isVcsPrefix(source.prefix)) {
         return asRepository(source);
     }

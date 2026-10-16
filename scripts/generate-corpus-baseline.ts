@@ -1,9 +1,5 @@
 // Records what the classifier does with every corpus row.
 //
-// Before the switch this snapshotted the old implementation so the migration
-// could be checked against it. It now snapshots the new pipeline and serves as
-// the regression guard for it.
-//
 // Invoke via: make generate-baseline
 
 import * as fs from "fs";
@@ -38,12 +34,7 @@ async function generateAsync(): Promise<void> {
 
         try {
             baseline.resolvedUrl = (
-                await linker.linkAsync(
-                    moduleSource,
-                    row.moduleName,
-                    row.version,
-                    new URL(row.pageUrl),
-                )
+                await linker.linkAsync(moduleSource, row.block, row.version, new URL(row.pageUrl))
             ).url;
         } catch (error) {
             baseline.threw = error instanceof Error ? error.message : String(error);

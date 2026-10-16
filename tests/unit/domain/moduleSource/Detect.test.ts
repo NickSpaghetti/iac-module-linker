@@ -288,6 +288,27 @@ describe("Given a host confusion attempt", () => {
         });
     });
 
+    describe("When a prefix that names a repository or an archive is rejected", () => {
+        test("Then I expect Unsupported and no other flag", () => {
+            // Arrange
+            const raws = [
+                "git::javascript:alert(1)",
+                "git::https://github.com@evil.com/a/b.git",
+                "hg::https://user@evil.com/x",
+                "s3::https://user@evil.com/x.zip",
+                "git::bad host:x",
+            ];
+
+            // Act
+            const detected = raws.map((raw) => ({ raw, flags: read(raw).flags }));
+
+            // Assert
+            expect(detected).toEqual(
+                raws.map((raw) => ({ raw, flags: MODULE_SOURCE_FLAGS.Unsupported })),
+            );
+        });
+    });
+
     describe("When userinfo appears on an ssh source", () => {
         test("Then I expect it accepted, because git@host is the normal form", () => {
             // Arrange

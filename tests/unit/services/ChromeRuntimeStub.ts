@@ -15,6 +15,7 @@ type ChromeLike = {
     runtime: {
         sendMessage: (message: unknown, callback: (response: unknown) => void) => void;
         getURL: (path: string) => string;
+        lastError?: { message?: string };
     };
 };
 
@@ -23,20 +24,28 @@ const globals = globalThis as unknown as { chrome?: ChromeLike };
 /**
  * Installs the stand in on the global, replacing whatever is there.
  * @param respond Decides what the callback receives for each message sent.
+ * @param lastError The error chrome reports during each callback, if any.
  * @returns A record of every message the code under test sent.
  */
-export const stubChromeRuntime = (respond: RuntimeResponder): RuntimeStub => {
+export const stubChromeRuntime = (
+    respond: RuntimeResponder,
+    lastError?: { message: string },
+): RuntimeStub => {
     const sent: unknown[] = [];
-    globals.chrome = {
-        runtime: {
-            sendMessage: (message, callback) => {
-                sent.push(message);
-                // The real callback never fires synchronously.
-                queueMicrotask(() => callback(respond(message)));
-            },
-            getURL: (path) => `chrome-extension://stub/${path}`,
+    const runtime: ChromeLike["runtime"] = {
+        sendMessage: (message, callback) => {
+            sent.push(message);
+            // The real callback never fires synchronously, and chrome sets
+            // lastError only while the callback runs.
+            queueMicrotask(() => {
+                runtime.lastError = lastError;
+                callback(respond(message));
+                runtime.lastError = undefined;
+            });
         },
+        getURL: (path) => `chrome-extension://stub/${path}`,
     };
+    globals.chrome = { runtime: runtime };
     return { sent: sent };
 };
 

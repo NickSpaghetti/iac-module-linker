@@ -1,12 +1,13 @@
 import { ChromeStorageCache } from "../services/ChromeStorageCache";
-import { readCachedModules } from "../types/CachedModules";
+import { readCachedModules, readDisplayModules } from "../types/CachedModules";
 import { DisplayModule } from "../types/DisplayModule";
 import { Nullable } from "../types/Nullable";
 import { moduleCacheKey } from "../services/ModuleCacheKey";
 import { pollUntilAsync } from "../util/Poll";
-import { SENDERS } from "../types/TabMessage";
+import { PopupRequest, SENDERS } from "../types/TabMessage";
 import { logRecovered } from "../util/Log";
 import { hasPageAccessAsync } from "../services/PageAccess";
+import { CONTENT_SCRIPT_FILE } from "../util/Constants";
 
 const TAB_WAIT_MS = 3_000;
 const TAB_POLL_MS = 100;
@@ -25,23 +26,17 @@ const isReady = (tab: chrome.tabs.Tab | undefined): tab is ActiveTab =>
 
 /**
  * Waits for the active tab to report an id and an address.
- *
- * The popup opens before chrome has finished telling it which tab is active,
- * and reading too early gives a tab with no url.
- *
- * Null means the wait ran out, which is different from a tab that is ready.
- * Returning the unready tab instead would hand the caller the very value this
- * exists to avoid, and nothing in its type would say so.
+ * @returns The tab, or null when the wait ran out.
  */
 export const readyActiveTabAsync = async (): Promise<Nullable<ActiveTab>> =>
-    await pollUntilAsync(
-        async () => {
+    await pollUntilAsync({
+        read: async () => {
             const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
             return isReady(tab) ? tab : null;
         },
-        TAB_WAIT_MS,
-        TAB_POLL_MS,
-    );
+        timeoutMs: TAB_WAIT_MS,
+        pollMs: TAB_POLL_MS,
+    });
 
 /**
  * @param tab The tab the popup was opened over, or null when chrome never said.
@@ -70,16 +65,13 @@ export const readTabModulesAsync = async (tab: Nullable<ActiveTab>): Promise<Dis
     try {
         await chrome.scripting.executeScript({
             target: { tabId: tab.id, allFrames: true },
-            files: ["contentscript.js"],
+            files: [CONTENT_SCRIPT_FILE],
         });
-        const answered: unknown = await chrome.tabs.sendMessage(tab.id, {
-            sender: SENDERS.POPUP,
-            tabId: tab.id,
-            tabUrl: tab.url,
-        });
-        return Array.isArray(answered) ? (answered as DisplayModule[]) : [];
+        const request: PopupRequest = { sender: SENDERS.POPUP, tabId: tab.id, tabUrl: tab.url };
+        const answered: unknown = await chrome.tabs.sendMessage(tab.id, request);
+        return readDisplayModules(answered);
     } catch (error) {
-        logRecovered("could not read the modules on this tab", error);
+        logRecovered("could not read the modules on this tab", { error });
         return [];
     }
 };

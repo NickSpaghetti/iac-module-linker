@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { IFetchService } from "../../../src/data-access/IFetchService";
-import { RunTimeFetchResponse } from "../../../src/types/RunTimeFetchResponse";
+import { FETCH_OUTCOMES, RunTimeFetchResponse } from "../../../src/types/RunTimeFetchResponse";
 
 type RecordedResponse = {
     ok: boolean;
@@ -34,7 +34,7 @@ export class MockFetchService implements IFetchService {
      * @returns The recorded response, shaped the way the real service shapes one.
      * @throws When nothing was recorded for that URL.
      */
-    fetchDataAsync(url: string): Promise<RunTimeFetchResponse<unknown>> {
+    fetchDataAsync(url: string): Promise<RunTimeFetchResponse> {
         const response = recorded[url];
         if (response === undefined) {
             throw new Error(
@@ -43,12 +43,10 @@ export class MockFetchService implements IFetchService {
             );
         }
 
-        return Promise.resolve({
-            ok: response.ok,
-            status: response.status,
-            statusText: response.statusText,
-            headers: new Headers(),
-            data: response.data,
-        });
+        return Promise.resolve(
+            response.ok
+                ? { outcome: FETCH_OUTCOMES.OK, data: response.data }
+                : { outcome: FETCH_OUTCOMES.REJECTED, status: response.status },
+        );
     }
 }

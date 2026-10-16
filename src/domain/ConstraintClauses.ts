@@ -9,9 +9,10 @@ export const TERRAFORM_VERSION_CONSTRAINTS = {
     EXCLUDES: "!=",
 } as const;
 
+/** Separates the clauses of a constraint. */
 export const CLAUSE_SEPARATOR = ",";
 
-/** Derived so the constant stays the only place operators are declared. */
+/** Every character that appears in an operator. */
 const OPERATOR_CHARACTERS = [
     ...new Set(Object.values(TERRAFORM_VERSION_CONSTRAINTS).join("")),
 ].join("");

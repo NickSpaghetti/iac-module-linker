@@ -1,6 +1,6 @@
 import { OPT_IN_ORIGINS, isSupportedPageHost, optInOriginOf } from "../util/PageHosts";
+import { CONTENT_SCRIPT_FILE } from "../util/Constants";
 
-const CONTENT_SCRIPT = "contentscript.js";
 const SCRIPT_ID_PREFIX = "iac-module-linker-";
 
 /**
@@ -39,7 +39,7 @@ const syncOnceAsync = async (): Promise<void> => {
         const registered = await chrome.scripting.getRegisteredContentScripts({ ids: [id] });
         if (granted && registered.length === 0) {
             await chrome.scripting.registerContentScripts([
-                { id, matches: [origin], js: [CONTENT_SCRIPT], runAt: "document_end" },
+                { id, matches: [origin], js: [CONTENT_SCRIPT_FILE], runAt: "document_end" },
             ]);
         } else if (!granted && registered.length > 0) {
             await chrome.scripting.unregisterContentScripts({ ids: [id] });

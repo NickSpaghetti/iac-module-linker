@@ -1,31 +1,28 @@
 import { SourceTypes } from "./SourceTypes";
 
-/**
- * One bit per behavior. These decide which code runs; `sourceType` is only
- * the popup's label.
- */
 /** The version control systems a `TYPE::` prefix can name. */
 export const VCS_PREFIXES = { GIT: "git", MERCURIAL: "hg" } as const;
 
+/** A version control system a `TYPE::` prefix can name. */
 export type Vcs = (typeof VCS_PREFIXES)[keyof typeof VCS_PREFIXES];
 
+/** The behaviors a module source can have, one bit each. */
 export const MODULE_SOURCE_FLAGS = {
     None: 0,
-    HasPrefix: 1 << 0,
-    HasSubDirectory: 1 << 1,
-    HasRef: 1 << 2,
-    LocalPath: 1 << 3,
-    RegistryAddress: 1 << 4,
-    RepositoryAddress: 1 << 5,
-    SshTransport: 1 << 6,
-    Archive: 1 << 7,
-    OciArtifact: 1 << 8,
-    Unsupported: 1 << 9,
-    SchemelessAddress: 1 << 10,
-    HttpTransport: 1 << 11,
-    MercurialRepo: 1 << 12,
+    HasSubDirectory: 1 << 0,
+    LocalPath: 1 << 1,
+    RegistryAddress: 1 << 2,
+    RepositoryAddress: 1 << 3,
+    SshTransport: 1 << 4,
+    Archive: 1 << 5,
+    OciArtifact: 1 << 6,
+    Unsupported: 1 << 7,
+    SchemelessAddress: 1 << 8,
+    HttpTransport: 1 << 9,
+    MercurialRepo: 1 << 10,
 } as const;
 
+/** A module source address, split into its parts and flagged by what it is. */
 export type ModuleSource = {
     raw: string;
     prefix: string;
@@ -43,9 +40,6 @@ export type ModuleSource = {
 
 /**
  * Creates the zero value for a module source.
- *
- * Unusable but valid, so callers never check for null and an unparseable
- * source still reaches the popup as a labeled row.
  * @returns An inert module source.
  */
 export const emptyModuleSource = (): ModuleSource => ({

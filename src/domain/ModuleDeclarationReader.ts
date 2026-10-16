@@ -1,40 +1,29 @@
 import { Nullable } from "../types/Nullable";
+import { isDeclarationBlock, ParsedDeclaration } from "../types/ParsedDeclaration";
+import { readSourcePosition } from "../types/SourcePosition";
 import { TerraformModule } from "../types/Terraform";
-
-/** The block names declarations are read from, and the prefix the popup shows for a provider. */
-export const TERRAFORM_SYNTAX = {
-    TERRAFORM: "terraform",
-    REQUIRED_PROVIDERS: "required_providers",
-    MODULE: "module",
-};
-
-const BLOCK_TYPES: readonly string[] = Object.values(TERRAFORM_SYNTAX);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-    typeof value === "object" && value !== null && !Array.isArray(value);
+import { hasField, readString } from "../util/Fields";
 
 const readDeclaration = (value: unknown): Nullable<TerraformModule> => {
     if (
-        !isRecord(value) ||
+        !hasField(value, "name") ||
         typeof value.name !== "string" ||
         value.name === "" ||
-        typeof value.block !== "string" ||
-        !BLOCK_TYPES.includes(value.block) ||
+        !hasField(value, "block") ||
+        !isDeclarationBlock(value.block) ||
+        !hasField(value, "source") ||
         typeof value.source !== "string"
     ) {
         return null;
     }
     return {
         moduleName: value.name,
-        terraformProperty: value.block,
-        provider: {
-            source: value.source,
-            version: typeof value.version === "string" ? value.version : "",
-        },
-        sourceLine: typeof value.line === "number" ? value.line : null,
-        sourceColumn: typeof value.column === "number" ? value.column : null,
-        writtenSource: typeof value.written === "string" ? value.written : value.source,
-        sourceResolved: value.resolved === true,
+        block: value.block,
+        source: value.source,
+        versionConstraint: readString<ParsedDeclaration>(value, "version") ?? "",
+        sourcePosition: readSourcePosition(value),
+        writtenSource: readString<ParsedDeclaration>(value, "written") ?? value.source,
+        sourceResolved: hasField(value, "resolved") && value.resolved === true,
     };
 };
 

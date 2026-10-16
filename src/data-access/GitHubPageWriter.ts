@@ -1,4 +1,3 @@
-import { Nullable } from "../types/Nullable";
 import { IPageWriter } from "./IPageWriter";
 import { SourceLinks } from "../types/SourceLinks";
 import { LINE_ID_PREFIX, lineNumberOf, linkPlacedSources } from "./PlacedSources";
@@ -34,9 +33,9 @@ export class GitHubPageWriter implements IPageWriter {
 // stylesheet counts as well as one on the element. "auto" parses to NaN and
 // means the line numbers are not stacked, which anything positive sits above.
 const raiseCodeLinesAboveLineNumbers = (): void => {
-    const lineNumbers = document.querySelector(LINE_NUMBERS) as Nullable<HTMLElement>;
-    const codeLines = document.querySelector(CODE_LINES) as Nullable<HTMLElement>;
-    if (codeLines === null) {
+    const lineNumbers = document.querySelector(LINE_NUMBERS);
+    const codeLines = document.querySelector(CODE_LINES);
+    if (!(codeLines instanceof HTMLElement)) {
         return;
     }
     const declared =

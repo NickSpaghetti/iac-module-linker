@@ -1,5 +1,6 @@
 import { SourceTypes } from "./SourceTypes";
 import { Nullable } from "./Nullable";
+import { SourcePosition } from "./SourcePosition";
 
 /** One module declaration as the popup and the content script show it. */
 export type DisplayModule = {
@@ -9,10 +10,8 @@ export type DisplayModule = {
     resolvedUrl: Nullable<string>;
     versionConstraint: string;
     resolvedVersion: string;
-    /** The 1-based line the source is written on, or null when the parser did not say. */
-    sourceLine: Nullable<number>;
-    /** The 0-based UTF-16 offset of the written source within its line, or null when the parser did not say. */
-    sourceColumn: Nullable<number>;
+    /** Where the source is written, or null when the parser did not say. */
+    sourcePosition: Nullable<SourcePosition>;
     /** The source as the file writes it, which is what the page shows. */
     writtenSource: string;
 };
@@ -28,7 +27,6 @@ export const emptyDisplayModule = (moduleName: string): DisplayModule => ({
     resolvedUrl: null,
     versionConstraint: "",
     resolvedVersion: "",
-    sourceLine: null,
-    sourceColumn: null,
+    sourcePosition: null,
     writtenSource: "",
 });

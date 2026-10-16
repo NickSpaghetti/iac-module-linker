@@ -2,10 +2,7 @@ import { Vcs, VCS_PREFIXES } from "../../types/ModuleSource";
 import { GITHUB_HOST, GITLAB_HOST } from "../../util/Constants";
 import { PATH_SEPARATOR, isFilePath } from "../../util/PathHelpers";
 
-/**
- * A host we know how to browse, and what it runs. The vcs is declared rather
- * than defaulted, so adding a host that is not git has to say so.
- */
+/** A host we know how to browse, and the vcs it runs. */
 export type RepositoryHost = {
     readonly vcs: Vcs;
     /** Whether a source written as `host/owner/repo`, with no prefix, is a repository on this host. */
@@ -19,11 +16,7 @@ export type RepositoryHost = {
 const BITBUCKET_HOST = "bitbucket.org";
 const BITBUCKET_SOURCE_ROUTE = "src";
 
-/**
- * The hosts this extension can browse: what each one runs, and where it puts
- * the ref. The detector reads `shorthand` and the link builder reads the
- * routes.
- */
+/** The hosts this extension can browse: what each one runs, and where it puts the ref. */
 export const BROWSE_LAYOUTS: Record<string, RepositoryHost | undefined> = {
     [GITHUB_HOST]: {
         vcs: VCS_PREFIXES.GIT,
@@ -32,7 +25,6 @@ export const BROWSE_LAYOUTS: Record<string, RepositoryHost | undefined> = {
         directoryRoute: "tree",
     },
     [BITBUCKET_HOST]: {
-        // Mercurial hosting ended here on 1 July 2020.
         vcs: VCS_PREFIXES.GIT,
         shorthand: true,
         fileRoute: BITBUCKET_SOURCE_ROUTE,

@@ -40,7 +40,7 @@ async function classifyAsync(row: (typeof MODULE_SOURCE_CORPUS)[number]): Promis
     };
     try {
         result.resolvedUrl = (
-            await linker.linkAsync(moduleSource, row.moduleName, row.version, new URL(row.pageUrl))
+            await linker.linkAsync(moduleSource, row.block, row.version, new URL(row.pageUrl))
         ).url;
     } catch (error) {
         result.threw = error instanceof Error ? error.message : String(error);

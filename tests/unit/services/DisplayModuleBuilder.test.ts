@@ -19,10 +19,10 @@ describe("Given a module whose source the file cannot evaluate", () => {
             const link = jest.spyOn(linker, "linkAsync");
             const module: TerraformModule = {
                 moduleName: "vpc",
-                terraformProperty: "module",
-                provider: { source: "${var.repo}//modules/vpc", version: "" },
-                sourceLine: 9,
-                sourceColumn: null,
+                block: "module",
+                source: "${var.repo}//modules/vpc",
+                versionConstraint: "",
+                sourcePosition: { line: 9, column: 13 },
                 writtenSource: "${var.repo}//modules/vpc",
                 sourceResolved: false,
             };
@@ -45,10 +45,10 @@ describe("Given a module whose source is a template the file evaluates", () => {
             // Arrange
             const module: TerraformModule = {
                 moduleName: "vpc",
-                terraformProperty: "module",
-                provider: { source: "./modules/vpc", version: "" },
-                sourceLine: 7,
-                sourceColumn: null,
+                block: "module",
+                source: "./modules/vpc",
+                versionConstraint: "",
+                sourcePosition: { line: 7, column: 13 },
                 writtenSource: "${local.modules}/vpc",
                 sourceResolved: true,
             };
@@ -62,6 +62,38 @@ describe("Given a module whose source is a template the file evaluates", () => {
             expect<Nullable<string>>(display.resolvedUrl).toBe(
                 "https://github.com/owner/repo/tree/main/modules/vpc",
             );
+        });
+    });
+});
+
+describe("Given a module whose name contains required_providers", () => {
+    describe("When its registry source is linked", () => {
+        test.each([
+            [
+                "terraform-aws-modules/vpc/aws",
+                "https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/5.0.0",
+            ],
+            [
+                "registry.opentofu.org/terraform-aws-modules/vpc/aws",
+                "https://search.opentofu.org/module/terraform-aws-modules/vpc/aws/5.0.0",
+            ],
+        ])("Then I expect %s linked as a module, not a provider", async (source, expected) => {
+            // Arrange
+            const module: TerraformModule = {
+                moduleName: "required_providers_shim",
+                block: "module",
+                source,
+                versionConstraint: "5.0.0",
+                sourcePosition: { line: 3, column: 13 },
+                writtenSource: source,
+                sourceResolved: true,
+            };
+
+            // Act
+            const display = await buildDisplayModuleAsync(PAGE, module, stubModuleSourceLinker());
+
+            // Assert
+            expect<Nullable<string>>(display.resolvedUrl).toBe(expected);
         });
     });
 });

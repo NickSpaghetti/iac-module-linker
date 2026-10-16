@@ -14,8 +14,7 @@ const FILLER: CachedModules = {
         resolvedUrl: "https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/6.7.3",
         versionConstraint: ">= 6.0, < 7.0",
         resolvedVersion: "6.7.3",
-        sourceLine: 120,
-        sourceColumn: null,
+        sourcePosition: { line: 120, column: 13 },
         writtenSource: "terraform-aws-modules/vpc/aws",
     })),
 };

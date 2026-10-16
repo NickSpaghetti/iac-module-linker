@@ -1,9 +1,20 @@
 import { ParseRequest, WORKER_QUERIES } from "../types/WorkerRequest";
 import { TerraformModule } from "../types/Terraform";
+import { PARSE_OUTCOMES, ParseResponse } from "../types/ParseResponse";
 import { readModuleDeclarations } from "../domain/ModuleDeclarationReader";
+import { readParseResponse } from "../WorkerResponseGuards";
+import { sendToWorkerAsync, withReason, WorkerFailures } from "./WorkerMessage";
 
-/** What the service worker answers a parse request with. */
-export type ParseResponse = { ok: boolean; declarations?: unknown; error?: string };
+const FAILURES: WorkerFailures<ParseResponse> = {
+    noResponse: (reason) => ({
+        outcome: PARSE_OUTCOMES.FAILED,
+        error: withReason("the parser did not respond", reason),
+    }),
+    malformed: {
+        outcome: PARSE_OUTCOMES.FAILED,
+        error: "the parser answered with something that is not a parse response",
+    },
+};
 
 /**
  * Parses HCL in the service worker, because wasm cannot be compiled in a
@@ -15,7 +26,8 @@ export class ChromeRuntimeParserService {
      * @param contents The raw text of the file being viewed.
      * @param fileName The file's name. One ending in `.json` is read as JSON syntax.
      * @returns Each well-formed declaration in the file, in the order the file writes them.
-     * @throws When the service worker reports a parse error, or does not respond.
+     * @throws When the service worker reports a parse error, does not respond, or
+     * answers with something that is not a parse response.
      */
     public async parseAsync(contents: string, fileName: string): Promise<TerraformModule[]> {
         const request: ParseRequest = {
@@ -23,14 +35,10 @@ export class ChromeRuntimeParserService {
             contents: contents,
             fileName: fileName,
         };
-        const response: ParseResponse = await new Promise((resolve) => {
-            chrome.runtime.sendMessage(request, (callback: ParseResponse) => {
-                resolve(callback ?? { ok: false, error: "the parser did not respond" });
-            });
-        });
+        const response = await sendToWorkerAsync(request, readParseResponse, FAILURES);
 
-        if (!response.ok || response.declarations === undefined) {
-            throw new Error(response.error ?? "the parser did not respond");
+        if (response.outcome === PARSE_OUTCOMES.FAILED) {
+            throw new Error(response.error);
         }
         return readModuleDeclarations(response.declarations);
     }

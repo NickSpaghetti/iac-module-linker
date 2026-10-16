@@ -12,7 +12,7 @@ describe("Given something the page has not rendered yet", () => {
             };
 
             // Act
-            const answer = await pollUntilAsync(read, 1_000, 10);
+            const answer = await pollUntilAsync({ read: read, timeoutMs: 1_000, pollMs: 10 });
 
             // Assert
             expect<string | null>(answer).toBe("ready");
@@ -30,7 +30,7 @@ describe("Given something the page has not rendered yet", () => {
             };
 
             // Act
-            const answer = await pollUntilAsync(read, 1_000, 5);
+            const answer = await pollUntilAsync({ read: read, timeoutMs: 1_000, pollMs: 5 });
 
             // Assert
             expect<string | null>(answer).toBe("ready");
@@ -48,7 +48,7 @@ describe("Given something the page has not rendered yet", () => {
             };
 
             // Act
-            const answer = await pollUntilAsync(read, 1_000, 5);
+            const answer = await pollUntilAsync({ read: read, timeoutMs: 1_000, pollMs: 5 });
 
             // Assert
             expect<number | null>(answer).toBe(42);
@@ -61,7 +61,7 @@ describe("Given something the page has not rendered yet", () => {
             const began = Date.now();
 
             // Act
-            const answer = await pollUntilAsync(() => null, 120, 20);
+            const answer = await pollUntilAsync({ read: () => null, timeoutMs: 120, pollMs: 20 });
 
             // Assert
             expect<unknown>(answer).toBeNull();
@@ -73,9 +73,9 @@ describe("Given something the page has not rendered yet", () => {
         test("Then I expect it accepted, because only null means not yet", async () => {
             // Act
             const answers = [
-                await pollUntilAsync(() => 0, 100, 5),
-                await pollUntilAsync(() => "", 100, 5),
-                await pollUntilAsync(() => false, 100, 5),
+                await pollUntilAsync({ read: () => 0, timeoutMs: 100, pollMs: 5 }),
+                await pollUntilAsync({ read: () => "", timeoutMs: 100, pollMs: 5 }),
+                await pollUntilAsync({ read: () => false, timeoutMs: 100, pollMs: 5 }),
             ];
 
             // Assert
