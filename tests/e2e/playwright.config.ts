@@ -7,6 +7,8 @@ import { defineConfig } from "@playwright/test";
  *
  * GitHub and GitLab run side by side, one worker each. Within a host the
  * specs stay serial, because GitHub rate limits an unauthenticated burst.
+ * GitLab tests are never retried: gitlab.com limits unauthenticated requests
+ * per IP by the hour, so a retry inside the lockout cannot pass and only spends more.
  */
 export default defineConfig({
     timeout: 60_000,
@@ -30,7 +32,7 @@ export default defineConfig({
             name: "e2e-gitlab",
             testDir: "./specs",
             testMatch: "gitlab.spec.ts",
-            retries: 1,
+            retries: 0,
             workers: 1,
         },
         {
