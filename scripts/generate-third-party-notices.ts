@@ -2,12 +2,8 @@
 // extension ships that it did not write: the Go modules linked into the wasm,
 // the Go runtime, and the npm packages bundled into the scripts.
 //
-// The Go side is listed by the build container into .gocache/notices, because
-// only that toolchain knows what the wasm links. The npm side is read from the
-// source maps of a throwaway build, so a package counts only if it is bundled.
-//
 // --check compares instead of writing, and fails when the file is out of date.
-// A license this does not recognise fails either way: someone has to read it.
+// A license this does not recognise fails either way.
 //
 // Invoke via: make third-party-notices, or make check-third-party-notices
 

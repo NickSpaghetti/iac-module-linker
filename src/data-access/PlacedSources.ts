@@ -6,7 +6,8 @@ import { createSourceAnchor } from "./SourceAnchor";
 /** The prefix of the id GitHub and GitLab give each rendered line, before its 1-based number. */
 export const LINE_ID_PREFIX = "LC";
 
-const INERT = "inert";
+/** The attribute both hosts use to make rendered code ignore the pointer. */
+export const INERT = "inert";
 
 /**
  * Returns the line number a rendered line's id names.

@@ -18,9 +18,5 @@ export type FetchRequest = {
     readonly cache: RequestCache;
 };
 
-/**
- * What a content script may send the service worker. Both senders are typed
- * against it and the guards in `WorkerRequestGuards` narrow back to it, so
- * the contract is checked at both ends rather than only on arrival.
- */
+/** What a content script may send the service worker. */
 export type WorkerRequest = ParseRequest | FetchRequest;

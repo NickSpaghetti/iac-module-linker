@@ -8,7 +8,6 @@ import {
     DEFAULT_REGISTRY_HOST,
     LATEST_VERSION,
     OPENTOFU_LAYOUT,
-    OPENTOFU_REGISTRY_HOST,
     TERRAFORM_LAYOUT,
     isPrivateRegistryHost,
     normalizeRegistryAddress,
@@ -17,25 +16,20 @@ import {
     registryTargetFor,
 } from "./RegistryHosts";
 import { PATH_SEPARATOR } from "../../util/PathHelpers";
+import { OPENTOFU_REGISTRY_HOST } from "../../util/Constants";
 import { isSafeHttpUrl } from "../../util/UrlSafety";
 
 const GIT_SUFFIX = ".git";
 
 type LinkBuilder = (source: ModuleSource, context: LinkContext) => Promise<ModuleLink>;
 
-/** For the builders that never consult a registry, which is most of them. */
+/** A link with no resolved version. */
 const linkOnly = (url: Nullable<string>): ModuleLink => ({ url: url, resolvedVersion: "" });
 
+/** The link for a source with nowhere to browse to. */
 export const NO_LINK: ModuleLink = { url: null, resolvedVersion: "" };
 
-/**
- * Builds a browse link from a source that carries its own address.
- *
- * `hg::`, `s3::` and `gcs::` name something for a client to fetch, not
- * something a browser can open, and only the ones that arrived over http are
- * both. A schemeless locator is not a url even then, so it is rebuilt from
- * the host and path the detector parsed out of it.
- */
+/** Builds a browse link from a source that carries its own address. */
 const linkHttpLocator = (source: ModuleSource): ModuleLink => {
     if (!hasFlag(source, MODULE_SOURCE_FLAGS.HttpTransport)) {
         return NO_LINK;
@@ -45,32 +39,27 @@ const linkHttpLocator = (source: ModuleSource): ModuleLink => {
     );
 };
 
+/** A row of the resolver table: which sources it takes, and how it labels and links them. */
 export type ModuleSourceResolver = {
+    /** The row's name. */
     readonly name: string;
+    /** Determines whether this row decides the source. */
     readonly matches: (source: ModuleSource) => boolean;
-    /** Reads the source, because a repository's label names its vcs and its transport. */
+    /** The source's label in the popup. */
     readonly label: (source: ModuleSource) => SourceTypes;
-    /** null means there is no browsable address. Browsable is not a stored bit. */
+    /** Builds the source's link, or null when there is no browsable address. */
     readonly linkAsync: Nullable<LinkBuilder>;
 };
 
-/**
- * The protocols mercurial can fetch over. `file` and `static-http` are absent
- * because `detect` rejects a source with no host before it reaches here.
- */
-const MERCURIAL_LABELS: Record<string, SourceTypes> = {
+/** The protocols mercurial can fetch over. */
+const MERCURIAL_LABELS: Record<string, SourceTypes | undefined> = {
     https: SourceTypes.mercurialHttps,
     http: SourceTypes.mercurialHttp,
     ssh: SourceTypes.mercurialSsh,
 };
 
-/**
- * The protocols git can fetch over. `rsync` is absent because git 2.10
- * removed it in 2016, and `file` for the reason above. A source naming
- * anything else is labelled unknown: this table is the claim about what the
- * vcs supports, so `hg::ftp://` is unknown while `git::ftp://` is not.
- */
-const GIT_LABELS: Record<string, SourceTypes> = {
+/** The protocols git can fetch over. */
+const GIT_LABELS: Record<string, SourceTypes | undefined> = {
     https: SourceTypes.gitHttps,
     http: SourceTypes.gitHttp,
     ssh: SourceTypes.gitSsh,
@@ -90,16 +79,13 @@ const flagged =
     (source: ModuleSource): boolean =>
         hasFlag(source, flag);
 
-/**
- * Any one of these means the source addresses a repository. Which one decides
- * only the transport, and `gitLabel` reads that from the scheme.
- */
+/** The flags that each mean a source addresses a repository. */
 const REPOSITORY_FLAGS =
     MODULE_SOURCE_FLAGS.SshTransport |
     MODULE_SOURCE_FLAGS.SchemelessAddress |
     MODULE_SOURCE_FLAGS.RepositoryAddress;
 
-/** `hasFlag` needs every bit, which is wrong for a bundle of alternatives. */
+/** Matches a source that has any of the flags. */
 const anyFlag =
     (flags: number) =>
     (source: ModuleSource): boolean =>
@@ -111,8 +97,7 @@ const anyFlag =
  */
 const MODULE_SOURCE_RESOLVERS: readonly ModuleSourceResolver[] = [
     {
-        // Must stay first: `detect` can set capability flags before it rejects,
-        // so a row above this one would match `git::javascript:alert(1)`.
+        // First, so a rejected source is never matched by another row.
         name: "unsupported",
         matches: flagged(MODULE_SOURCE_FLAGS.Unsupported),
         label: () => SourceTypes.unknown,
@@ -264,10 +249,14 @@ async function linkRegistryAsync(source: ModuleSource, context: LinkContext): Pr
         return linkOnly(`https://${source.registryHost}${source.path}`);
     }
 
-    const target = registryTargetFor(context.moduleName);
+    const target = registryTargetFor(context.block);
 
     const address = normalizeRegistryAddress(source.path, target);
-    const version = await context.resolveVersionAsync(address, target, context.versionConstraint);
+    const version = await context.resolveVersionAsync({
+        address,
+        target,
+        versionConstraint: context.versionConstraint,
+    });
     if (version === null) {
         return NO_LINK;
     }
@@ -278,23 +267,19 @@ async function linkRegistryAsync(source: ModuleSource, context: LinkContext): Pr
     };
 }
 
-/**
- * Its api takes a version rather than a constraint, so only an exact pin can
- * be used, and only once the registry confirms it exists. Anything else is
- * `latest`, which is always a live page.
- */
+// OpenTofu's pages take a version, not a constraint; `latest` is always a live page.
 async function linkOpenTofuRegistryAsync(
     source: ModuleSource,
     context: LinkContext,
 ): Promise<ModuleLink> {
-    const target = registryTargetFor(context.moduleName);
+    const target = registryTargetFor(context.block);
     const address = registryAddress(source.path);
 
-    const published = await context.resolveOpenTofuVersionAsync(
+    const published = await context.resolveOpenTofuVersionAsync({
         address,
         target,
-        context.versionConstraint,
-    );
+        versionConstraint: context.versionConstraint,
+    });
     const version = published ?? LATEST_VERSION;
 
     return {

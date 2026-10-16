@@ -2,21 +2,14 @@ import { expect } from "@jest/globals";
 import { toSourceLinks } from "../../../src/domain/SourceLinks";
 import { DisplayModule } from "../../../src/types/DisplayModule";
 import { Nullable } from "../../../src/types/Nullable";
+import { SourcePosition } from "../../../src/types/SourcePosition";
 import { SourceTypes } from "../../../src/types/SourceTypes";
 
 const SOURCE = "hashicorp/consul/aws";
 
-/**
- * Builds a display module.
- * @param resolvedUrl The url it resolved to, or null.
- * @param sourceLine The line its source is written on, or null.
- * @param sourceColumn Where on that line its written source starts, or null.
- * @returns The module.
- */
 const displayModule = (
     resolvedUrl: Nullable<string>,
-    sourceLine: Nullable<number> = null,
-    sourceColumn: Nullable<number> = null,
+    sourcePosition: Nullable<SourcePosition> = null,
 ): DisplayModule => ({
     source: SOURCE,
     moduleName: "consul",
@@ -24,8 +17,7 @@ const displayModule = (
     resolvedUrl: resolvedUrl,
     versionConstraint: "",
     resolvedVersion: "",
-    sourceLine: sourceLine,
-    sourceColumn: sourceColumn,
+    sourcePosition: sourcePosition,
     writtenSource: SOURCE,
 });
 
@@ -34,7 +26,7 @@ describe("Given a module whose source is a template", () => {
         test("Then I expect it placed with the source as the page shows it", () => {
             // Arrange
             const module: DisplayModule = {
-                ...displayModule("https://example.com/a", 7, 12),
+                ...displayModule("https://example.com/a", { line: 7, column: 12 }),
                 source: "terraform-aws-modules/vpc/aws",
                 writtenSource: "${local.registry}/vpc/aws",
             };
@@ -55,8 +47,8 @@ describe("Given modules the parser placed on a line and column", () => {
         test("Then I expect both placed on that line, in module order", () => {
             // Arrange
             const modules = [
-                displayModule("https://example.com/a", 3, 23),
-                displayModule("https://example.com/b", 3, 55),
+                displayModule("https://example.com/a", { line: 3, column: 23 }),
+                displayModule("https://example.com/b", { line: 3, column: 55 }),
             ];
 
             // Act
@@ -74,8 +66,8 @@ describe("Given modules the parser placed on a line and column", () => {
         test("Then I expect each line to keep its own url", () => {
             // Arrange
             const modules = [
-                displayModule("https://example.com/0.1.0", 12, 13),
-                displayModule("https://example.com/0.11.0", 19, 13),
+                displayModule("https://example.com/0.1.0", { line: 12, column: 13 }),
+                displayModule("https://example.com/0.11.0", { line: 19, column: 13 }),
             ];
 
             // Act
@@ -87,13 +79,12 @@ describe("Given modules the parser placed on a line and column", () => {
         });
     });
 
-    describe("When a module has no url, no line or no column", () => {
+    describe("When a module has no url or no position", () => {
         test("Then I expect it left out", () => {
             // Arrange
             const modules = [
-                displayModule(null, 3, 12),
-                displayModule("https://example.com/a", null, 12),
-                displayModule("https://example.com/b", 3, null),
+                displayModule(null, { line: 3, column: 12 }),
+                displayModule("https://example.com/a", null),
             ];
 
             // Act

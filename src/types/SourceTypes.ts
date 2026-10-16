@@ -1,3 +1,4 @@
+/** The kinds of module source the popup labels. */
 export enum SourceTypes {
     url = "url",
     path = "path",
@@ -21,9 +22,5 @@ export enum SourceTypes {
  * @param value A source type read back from storage, written by any build.
  * @returns The value when it is a member of this enum, otherwise unknown.
  */
-export const toSourceTypeLabel = (value: unknown): SourceTypes => {
-    const members = Object.values(SourceTypes) as string[];
-    return typeof value === "string" && members.includes(value)
-        ? (value as SourceTypes)
-        : SourceTypes.unknown;
-};
+export const toSourceTypeLabel = (value: unknown): SourceTypes =>
+    Object.values(SourceTypes).find((member) => member === value) ?? SourceTypes.unknown;

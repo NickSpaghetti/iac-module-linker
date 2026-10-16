@@ -61,8 +61,6 @@
         } catch {
             status = `Could not copy ${text}`;
         }
-        // A second copy inside the window would otherwise be wiped early by
-        // the first one's timer.
         clearTimeout(clearing);
         clearing = setTimeout(() => (status = ""), STATUS_MS);
     };

@@ -1,11 +1,5 @@
 // Checks that the corpus still matches the fixture repository.
 //
-// The corpus lives here and the Terraform files live in
-// iac-module-linker-fixtures. Nothing stops the two drifting apart, and a
-// corpus that no longer reflects the fixtures is a corpus that tests nothing.
-//
-// Network bound, so this runs on a schedule rather than on every pull request.
-//
 // Invoke via: make check-corpus-sync
 
 import { MODULE_SOURCE_CORPUS } from "../tests/unit/fixtures/module-sources";
@@ -15,11 +9,7 @@ const COMMENT_MARKER = "#";
 const SOURCE_KEYWORD = "source";
 const ASSIGNMENT = "=";
 
-/**
- * The corpus holds parsed values and the file holds HCL literals, so a source
- * containing a backslash or a quote is spelled differently in each. The
- * security fixtures use both.
- */
+/** Spells a parsed source the way an HCL string literal writes it. */
 const toHclLiteral = (source: string): string =>
     source.split("\\").join("\\\\").split('"').join('\\"');
 
@@ -59,14 +49,12 @@ async function checkAsync(): Promise<void> {
 
     const problems: string[] = [];
 
-    // Every corpus row must still exist in the file it claims to come from.
     for (const row of MODULE_SOURCE_CORPUS) {
         if (!(contents.get(row.file) ?? "").includes(toHclLiteral(row.source))) {
             problems.push(`${row.id}: source is no longer in ${row.file}`);
         }
     }
 
-    // And every source in the fixtures must be represented in the corpus.
     for (const file of files) {
         const inFile = countSourceAssignments(contents.get(file) ?? "");
         const inCorpus = MODULE_SOURCE_CORPUS.filter((row) => row.file === file).length;

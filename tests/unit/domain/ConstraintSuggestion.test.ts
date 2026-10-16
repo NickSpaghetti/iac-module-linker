@@ -16,7 +16,10 @@ describe("Given a constraint and the version it resolved to", () => {
             // Act
             const suggested = cases.map(({ constraint }) => ({
                 constraint,
-                suggestion: suggestConstraint(constraint, RESOLVED),
+                suggestion: suggestConstraint({
+                    constraint: constraint,
+                    resolvedVersion: RESOLVED,
+                }),
             }));
 
             // Assert
@@ -31,7 +34,7 @@ describe("Given a constraint and the version it resolved to", () => {
 
             // Act
             const suggested = constraints.map((constraint) =>
-                suggestConstraint(constraint, RESOLVED),
+                suggestConstraint({ constraint: constraint, resolvedVersion: RESOLVED }),
             );
 
             // Assert
@@ -50,7 +53,10 @@ describe("Given a constraint and the version it resolved to", () => {
             // Act
             const suggested = cases.map(({ constraint }) => ({
                 constraint,
-                suggestion: suggestConstraint(constraint, RESOLVED),
+                suggestion: suggestConstraint({
+                    constraint: constraint,
+                    resolvedVersion: RESOLVED,
+                }),
             }));
 
             // Assert
@@ -64,7 +70,10 @@ describe("Given a constraint and the version it resolved to", () => {
             const constraint = "~>6.0";
 
             // Act
-            const suggestion = suggestConstraint(constraint, RESOLVED);
+            const suggestion = suggestConstraint({
+                constraint: constraint,
+                resolvedVersion: RESOLVED,
+            });
 
             // Assert
             expect(suggestion).toBe("~> 6.7");
@@ -77,7 +86,10 @@ describe("Given a constraint and the version it resolved to", () => {
             const constraint = ">= 5.0, < 6.0";
 
             // Act
-            const suggestion = suggestConstraint(constraint, RESOLVED);
+            const suggestion = suggestConstraint({
+                constraint: constraint,
+                resolvedVersion: RESOLVED,
+            });
 
             // Assert
             expect(suggestion).toBeNull();
@@ -91,7 +103,7 @@ describe("Given a constraint and the version it resolved to", () => {
 
             // Act
             const suggested = constraints.map((constraint) =>
-                suggestConstraint(constraint, RESOLVED),
+                suggestConstraint({ constraint: constraint, resolvedVersion: RESOLVED }),
             );
 
             // Assert
@@ -113,7 +125,7 @@ describe("Given a constraint and the version it resolved to", () => {
 
             // Act
             const suggested = cases.map(({ constraint, version }) =>
-                suggestConstraint(constraint, version),
+                suggestConstraint({ constraint: constraint, resolvedVersion: version }),
             );
 
             // Assert
@@ -131,7 +143,7 @@ describe("Given a constraint and the version it resolved to", () => {
 
             // Act
             const suggested = constraints.map((constraint) =>
-                suggestConstraint(constraint, behind),
+                suggestConstraint({ constraint: constraint, resolvedVersion: behind }),
             );
 
             // Assert
@@ -149,7 +161,7 @@ describe("Given a constraint and the version it resolved to", () => {
 
             // Act
             const suggested = cases.map(({ constraint, version }) =>
-                suggestConstraint(constraint, version),
+                suggestConstraint({ constraint: constraint, resolvedVersion: version }),
             );
 
             // Assert
@@ -169,7 +181,10 @@ describe("Given a constraint and the version it resolved to", () => {
             // Act
             const suggested = cases.map(({ constraint }) => ({
                 constraint,
-                suggestion: suggestConstraint(constraint, prerelease),
+                suggestion: suggestConstraint({
+                    constraint: constraint,
+                    resolvedVersion: prerelease,
+                }),
             }));
 
             // Assert

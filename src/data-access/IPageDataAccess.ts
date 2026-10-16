@@ -1,10 +1,7 @@
 import { Nullable } from "../types/Nullable";
 import { HclFileTypes } from "../types/HclFileTypes";
 
-/**
- * Reading the file page a host rendered. Substituted in tests of anything
- * above it, so that a service can be handed file text without building a DOM.
- */
+/** Reading the file page a host rendered. */
 export interface IPageDataAccess {
     getFileType(): Nullable<HclFileTypes>;
     getFileName(): string;

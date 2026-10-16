@@ -20,8 +20,7 @@ const row = {
     resolvedUrl: "https://registry.terraform.io/x",
     versionConstraint: "~> 6.0",
     resolvedVersion: "6.7.3",
-    sourceLine: 12,
-    sourceColumn: 14,
+    sourcePosition: { line: 12, column: 14 },
     writtenSource: "terraform-aws-modules/vpc/aws",
 };
 
@@ -84,8 +83,7 @@ describe("Given a cache entry read back from storage", () => {
                 resolvedUrl: null,
                 versionConstraint: "",
                 resolvedVersion: "",
-                sourceLine: null,
-                sourceColumn: null,
+                sourcePosition: null,
                 writtenSource: "",
             });
         });
@@ -105,8 +103,8 @@ describe("Given a cache entry read back from storage", () => {
         });
     });
 
-    describe("When a row has a source line", () => {
-        test("Then I expect the line kept", () => {
+    describe("When a row has a source position", () => {
+        test("Then I expect the position kept", () => {
             // Arrange
             const stored = entry([row]);
 
@@ -114,20 +112,30 @@ describe("Given a cache entry read back from storage", () => {
             const read = readCachedModules(stored);
 
             // Assert
-            expect(read?.modules[0].sourceLine).toBe(12);
+            expect(read?.modules[0].sourcePosition).toEqual({ line: 12, column: 14 });
         });
     });
 
-    describe("When a row's source line is not a number", () => {
+    describe("When a row's source position is not one", () => {
         test("Then I expect it read as null", () => {
             // Arrange
-            const stored = entry([{ ...row, sourceLine: "12" }]);
+            // The last row keeps line and column as flat fields, outside a position.
+            const positions: unknown[] = [{ line: "12", column: 14 }, { line: 12 }, null];
+            const stored = entry([
+                ...positions.map((sourcePosition) => ({ ...row, sourcePosition })),
+                { ...row, sourcePosition: undefined, sourceLine: 12, sourceColumn: 14 },
+            ]);
 
             // Act
             const read = readCachedModules(stored);
 
             // Assert
-            expect(read?.modules[0].sourceLine).toBeNull();
+            expect(read?.modules.map((module) => module.sourcePosition)).toEqual([
+                null,
+                null,
+                null,
+                null,
+            ]);
         });
     });
 

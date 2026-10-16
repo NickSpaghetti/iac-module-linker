@@ -8,6 +8,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { WORKER_QUERIES } from "../../src/types/WorkerRequest";
+import { CONTENT_SCRIPT_FILE } from "../../src/util/Constants";
 
 /** A parse request exactly as the content script sends one. */
 const parse = { contentScriptQuery: WORKER_QUERIES.PARSE, contents: "x", fileName: "main.tf" };
@@ -118,6 +119,19 @@ describe("Given a url the service worker was asked to fetch", () => {
         });
     });
 
+    describe("When the url is a permitted host over plain http", () => {
+        test("Then I expect it refused", () => {
+            // Arrange
+            const urls = ALLOWED_FETCH_HOSTS.map((host) => `http://${host}/v1/x`);
+
+            // Act
+            const allowed = urls.map(isAllowedFetchHost);
+
+            // Assert
+            expect<boolean[]>(allowed).toEqual(urls.map(() => false));
+        });
+    });
+
     describe("When the url is not a url", () => {
         test("Then I expect it refused rather than throwing", () => {
             // Arrange
@@ -149,6 +163,25 @@ describe("Given a url the service worker was asked to fetch", () => {
 
             // Assert
             expect<string[]>(covered).toEqual(ALLOWED_FETCH_HOSTS.map((host) => `${host}: true`));
+        });
+    });
+});
+
+describe("Given the content script's file name", () => {
+    describe("When it is compared with the manifest", () => {
+        test("Then I expect the manifest to load the file the extension injects", () => {
+            // Arrange
+            // vite.config.mts names the bundle from the manifest, so this also checks CONTENT_SCRIPT_FILE against the build.
+            const manifestFile = path.resolve(__dirname, "../../public/manifest.json");
+            const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8")) as {
+                content_scripts: { js: string[] }[];
+            };
+
+            // Act
+            const loaded = manifest.content_scripts.flatMap((script) => script.js);
+
+            // Assert
+            expect<string[]>(loaded).toContain(CONTENT_SCRIPT_FILE);
         });
     });
 });

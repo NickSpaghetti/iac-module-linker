@@ -142,13 +142,13 @@ test.describe(GITLAB.name, () => {
         const { cached, linkable } = (await worker.evaluate(async () => {
             const all = await chrome.storage.session.get(null);
             const entry = Object.values(all)[0] as
-                | { modules?: { resolvedUrl: string | null; sourceLine: number | null }[] }
+                | { modules?: { resolvedUrl: string | null; sourcePosition: object | null }[] }
                 | undefined;
             const modules = entry?.modules ?? [];
             return {
                 cached: modules.length,
                 linkable: modules.filter(
-                    (module) => module.resolvedUrl !== null && module.sourceLine !== null,
+                    (module) => module.resolvedUrl !== null && module.sourcePosition !== null,
                 ).length,
             };
         })) as { cached: number; linkable: number };

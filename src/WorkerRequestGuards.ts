@@ -1,10 +1,13 @@
 import { FetchRequest, ParseRequest, WORKER_QUERIES } from "./types/WorkerRequest";
+import { hasField } from "./util/Fields";
+import { URL_PROTOCOLS } from "./util/UrlSafety";
+import { OPENTOFU_REGISTRY_HOST, TERRAFORM_REGISTRY_HOST } from "./util/Constants";
 
 /**
  * What the service worker will fetch. Read against `host_permissions` in
  * `public/manifest.json`; the two have to agree or a lookup fails silently.
  */
-export const ALLOWED_FETCH_HOSTS = ["registry.terraform.io", "registry.opentofu.org"];
+export const ALLOWED_FETCH_HOSTS = [TERRAFORM_REGISTRY_HOST, OPENTOFU_REGISTRY_HOST];
 
 const CACHE_MODES: RequestCache[] = [
     "default",
@@ -20,35 +23,38 @@ const CACHE_MODES: RequestCache[] = [
  * @returns true if it is a well formed request to parse a file; otherwise, false.
  */
 export const isParseRequest = (message: unknown): message is ParseRequest =>
-    readQuery(message) === WORKER_QUERIES.PARSE &&
-    isString(readField(message, "contents")) &&
-    isString(readField(message, "fileName"));
+    hasField(message, "contentScriptQuery") &&
+    message.contentScriptQuery === WORKER_QUERIES.PARSE &&
+    hasField(message, "contents") &&
+    typeof message.contents === "string" &&
+    hasField(message, "fileName") &&
+    typeof message.fileName === "string";
 
 /**
  * @param message A runtime message, of any shape.
  * @returns true if it is a well formed request to fetch a url; otherwise, false.
  */
 export const isFetchRequest = (message: unknown): message is FetchRequest =>
-    readQuery(message) === WORKER_QUERIES.FETCH &&
-    isString(readField(message, "url")) &&
-    CACHE_MODES.includes(readField(message, "cache") as RequestCache);
+    hasField(message, "contentScriptQuery") &&
+    message.contentScriptQuery === WORKER_QUERIES.FETCH &&
+    hasField(message, "url") &&
+    typeof message.url === "string" &&
+    hasField(message, "cache") &&
+    isRequestCache(message.cache);
 
-const isString = (value: unknown): value is string => typeof value === "string";
-
-const readQuery = (message: unknown): unknown => readField(message, "contentScriptQuery");
-
-const readField = (message: unknown, field: string): unknown =>
-    typeof message === "object" && message !== null
-        ? (message as Record<string, unknown>)[field]
-        : undefined;
+const isRequestCache = (value: unknown): value is RequestCache =>
+    CACHE_MODES.some((mode) => mode === value);
 
 /**
  * @param url The address the service worker was asked to fetch.
- * @returns true if its host is one this extension is permitted to reach; otherwise, false.
+ * @returns true if it is https on a host this extension may reach; otherwise, false.
  */
 export const isAllowedFetchHost = (url: string): boolean => {
     try {
-        return ALLOWED_FETCH_HOSTS.includes(new URL(url).hostname);
+        const parsed = new URL(url);
+        return (
+            parsed.protocol === URL_PROTOCOLS.HTTPS && ALLOWED_FETCH_HOSTS.includes(parsed.hostname)
+        );
     } catch {
         return false;
     }

@@ -1,3 +1,5 @@
+import { DeclarationBlock } from "../../../src/types/ParsedDeclaration";
+
 /**
  * Every module source in the iac-module-linker-fixtures repo, with the
  * classification and link it should produce.
@@ -20,6 +22,8 @@ export type CorpusRow = {
     pageUrl: string;
     /** The name the block was given. */
     moduleName: string;
+    /** The type of block the source is declared in. */
+    block: DeclarationBlock;
     /** The source exactly as the fixture wrote it. */
     source: string;
     /** The constraint the block declared. */
@@ -44,6 +48,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/01-local-paths.tf",
         moduleName: "local_dir",
+        block: "module",
         source: "./modules/vpc",
         version: "",
         expectedSourceType: "path",
@@ -59,6 +64,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/01-local-paths.tf",
         moduleName: "local_file_target",
+        block: "module",
         source: "./modules/vpc/main.tf",
         version: "",
         expectedSourceType: "path",
@@ -74,6 +80,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/01-local-paths.tf",
         moduleName: "local_sibling",
+        block: "module",
         source: "./modules/lambda",
         version: "",
         expectedSourceType: "path",
@@ -89,6 +96,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/02-registry-public.tf",
         moduleName: "registry_constraint",
+        block: "module",
         source: "terraform-aws-modules/rds/aws",
         version: ">= 6.0, < 7.0",
         expectedSourceType: "registry",
@@ -104,6 +112,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/02-registry-public.tf",
         moduleName: "registry_unversioned",
+        block: "module",
         source: "terraform-aws-modules/security-group/aws",
         version: "",
         expectedSourceType: "registry",
@@ -119,6 +128,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/02-registry-public.tf",
         moduleName: "registry_versioned",
+        block: "module",
         source: "terraform-aws-modules/vpc/aws",
         version: "6.7.3",
         expectedSourceType: "registry",
@@ -134,6 +144,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/03-registry-host.tf",
         moduleName: "hcp_terraform",
+        block: "module",
         source: "app.terraform.io/example-corp/k8s-cluster/azurerm",
         version: "1.0.0",
         expectedSourceType: "privateRegistry",
@@ -148,6 +159,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/03-registry-host.tf",
         moduleName: "opentofu_registry",
+        block: "module",
         source: "registry.opentofu.org/terraform-aws-modules/vpc/aws",
         version: "6.7.3",
         expectedSourceType: "registry",
@@ -163,6 +175,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/03-registry-host.tf",
         moduleName: "opentofu_registry_range",
+        block: "module",
         source: "registry.opentofu.org/terraform-aws-modules/vpc/aws",
         version: "~> 5.0",
         expectedSourceType: "registry",
@@ -177,6 +190,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/03-registry-host.tf",
         moduleName: "third_party_registry",
+        block: "module",
         source: "registry.example.com/example-corp/networking/aws",
         version: "",
         expectedSourceType: "registry",
@@ -191,6 +205,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/04-git-forced.tf",
         moduleName: "git_https_file_target",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc/main.tf?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:https",
@@ -206,6 +221,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/04-git-forced.tf",
         moduleName: "git_https_no_subdir",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:https",
@@ -221,6 +237,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/04-git-forced.tf",
         moduleName: "git_https_subdir_ref",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:https",
@@ -236,6 +253,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/04-git-forced.tf",
         moduleName: "git_ssh_scheme",
+        block: "module",
         source: "git::ssh://git@github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:ssh",
@@ -251,6 +269,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/05-git-scp.tf",
         moduleName: "scp_bare",
+        block: "module",
         source: "git@github.com:NickSpaghetti/iac-module-linker-fixtures.git",
         version: "",
         expectedSourceType: "git:ssh",
@@ -265,6 +284,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/05-git-scp.tf",
         moduleName: "scp_bare_subdir",
+        block: "module",
         source: "git@github.com:NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc",
         version: "",
         expectedSourceType: "git:ssh",
@@ -280,6 +300,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/05-git-scp.tf",
         moduleName: "scp_with_forced_type",
+        block: "module",
         source: "git::git@github.com:NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:ssh",
@@ -295,6 +316,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/06-github-shorthand.tf",
         moduleName: "gh_shorthand",
+        block: "module",
         source: "github.com/NickSpaghetti/iac-module-linker-fixtures",
         version: "",
         expectedSourceType: "git:https",
@@ -309,6 +331,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/06-github-shorthand.tf",
         moduleName: "gh_shorthand_ref",
+        block: "module",
         source: "github.com/NickSpaghetti/iac-module-linker-fixtures?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:https",
@@ -324,6 +347,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/06-github-shorthand.tf",
         moduleName: "gh_shorthand_subdir",
+        block: "module",
         source: "github.com/NickSpaghetti/iac-module-linker-fixtures//modules/vpc",
         version: "",
         expectedSourceType: "git:https",
@@ -339,6 +363,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/07-bitbucket.tf",
         moduleName: "bitbucket_shorthand",
+        block: "module",
         source: "bitbucket.org/example-corp/tofu-consul-aws",
         version: "",
         expectedSourceType: "git:https",
@@ -353,6 +378,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/07-bitbucket.tf",
         moduleName: "bitbucket_subdir",
+        block: "module",
         source: "bitbucket.org/example-corp/tofu-consul-aws//modules/consul",
         version: "",
         expectedSourceType: "git:https",
@@ -368,6 +394,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/08-mercurial.tf",
         moduleName: "hg_http",
+        block: "module",
         source: "hg::http://example.com/vpc.hg",
         version: "",
         expectedSourceType: "mercurial:http",
@@ -382,6 +409,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/08-mercurial.tf",
         moduleName: "hg_ref",
+        block: "module",
         source: "hg::http://example.com/vpc.hg?ref=default",
         version: "",
         expectedSourceType: "mercurial:http",
@@ -396,6 +424,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/09-archives.tf",
         moduleName: "gcs_archive",
+        block: "module",
         source: "gcs::https://www.googleapis.com/storage/v1/modules/foomodule.zip",
         version: "",
         expectedSourceType: "archive",
@@ -410,6 +439,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/09-archives.tf",
         moduleName: "http_zip",
+        block: "module",
         source: "https://example.com/vpc-module.zip",
         version: "",
         expectedSourceType: "archive",
@@ -424,6 +454,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/09-archives.tf",
         moduleName: "s3_archive",
+        block: "module",
         source: "s3::https://s3-eu-west-1.amazonaws.com/examplecorp-tofu-modules/vpc.zip",
         version: "",
         expectedSourceType: "archive",
@@ -437,6 +468,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         file: "10-oci.tf",
         pageUrl: "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/10-oci.tf",
         moduleName: "oci_digest",
+        block: "module",
         source: "oci://example.com/repository-name?digest=sha256:abc123",
         version: "",
         expectedSourceType: "oci",
@@ -450,6 +482,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         file: "10-oci.tf",
         pageUrl: "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/10-oci.tf",
         moduleName: "oci_plain",
+        block: "module",
         source: "oci://example.com/repository-name",
         version: "",
         expectedSourceType: "oci",
@@ -463,6 +496,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         file: "10-oci.tf",
         pageUrl: "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/10-oci.tf",
         moduleName: "oci_tag",
+        block: "module",
         source: "oci://example.com/repository-name?tag=v1.0.0",
         version: "",
         expectedSourceType: "oci",
@@ -477,6 +511,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/11-subdirs.tf",
         moduleName: "git_nested_subdir",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:https",
@@ -492,6 +527,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/11-subdirs.tf",
         moduleName: "registry_subdir",
+        block: "module",
         source: "terraform-aws-modules/vpc/aws//modules/vpc-endpoints",
         version: "6.7.3",
         expectedSourceType: "registry",
@@ -507,6 +543,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/11-subdirs.tf",
         moduleName: "shorthand_subdir",
+        block: "module",
         source: "github.com/NickSpaghetti/iac-module-linker-fixtures//modules/lambda",
         version: "",
         expectedSourceType: "git:https",
@@ -521,6 +558,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         file: "12-refs.tf",
         pageUrl: "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/12-refs.tf",
         moduleName: "no_ref_defaults_to_default_branch",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc",
         version: "",
         expectedSourceType: "git:https",
@@ -535,6 +573,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         file: "12-refs.tf",
         pageUrl: "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/12-refs.tf",
         moduleName: "ref_branch",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc?ref=main",
         version: "",
         expectedSourceType: "git:https",
@@ -549,6 +588,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         file: "12-refs.tf",
         pageUrl: "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/12-refs.tf",
         moduleName: "ref_tag",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:https",
@@ -563,6 +603,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         file: "12-refs.tf",
         pageUrl: "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/12-refs.tf",
         moduleName: "ref_with_depth",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc?ref=v1.0.0&depth=1",
         version: "",
         expectedSourceType: "git:https",
@@ -578,6 +619,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/13-required-providers.tf",
         moduleName: "required_providers.aws",
+        block: "required_providers",
         source: "hashicorp/aws",
         version: ">= 5.0, < 6.0",
         expectedSourceType: "registry",
@@ -592,6 +634,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/13-required-providers.tf",
         moduleName: "required_providers.bare_name_defaults_to_hashicorp",
+        block: "required_providers",
         source: "random",
         version: "",
         expectedSourceType: "registry",
@@ -606,6 +649,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/13-required-providers.tf",
         moduleName: "required_providers.okta",
+        block: "required_providers",
         source: "okta/okta",
         version: "4.9.1",
         expectedSourceType: "registry",
@@ -620,6 +664,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/14-security-cases.tf",
         moduleName: "backslash_no_confusion",
+        block: "module",
         source: "a.terraform.io\\@evil.com/x",
         version: "",
         expectedSourceType: "privateRegistry",
@@ -634,6 +679,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/14-security-cases.tf",
         moduleName: "decimal_ip_backslash",
+        block: "module",
         source: "3325256838\\a.terraform.io/path",
         version: "",
         expectedSourceType: "unknown",
@@ -648,6 +694,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/14-security-cases.tf",
         moduleName: "javascript_scheme",
+        block: "module",
         source: "javascript:x.terraform.io/foo,alert(document.domain)",
         version: "",
         expectedSourceType: "unknown",
@@ -662,6 +709,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/14-security-cases.tf",
         moduleName: "userinfo_smuggling",
+        block: "module",
         source: "user@a.terraform.io/path",
         version: "",
         expectedSourceType: "unknown",
@@ -676,6 +724,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/15-everything.tofu",
         moduleName: "tofu_git",
+        block: "module",
         source: "git::https://github.com/NickSpaghetti/iac-module-linker-fixtures.git//modules/vpc?ref=v1.0.0",
         version: "",
         expectedSourceType: "git:https",
@@ -691,6 +740,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/15-everything.tofu",
         moduleName: "tofu_oci",
+        block: "module",
         source: "oci://example.com/repository-name?tag=v1.0.0",
         version: "",
         expectedSourceType: "oci",
@@ -705,6 +755,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/15-everything.tofu",
         moduleName: "tofu_registry",
+        block: "module",
         source: "terraform-aws-modules/vpc/aws",
         version: "6.7.3",
         expectedSourceType: "registry",
@@ -720,6 +771,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/nested/deep/consumer.tf",
         moduleName: "up_two",
+        block: "module",
         source: "../../modules/vpc",
         version: "",
         expectedSourceType: "path",
@@ -735,6 +787,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/nested/deep/consumer.tf",
         moduleName: "up_two_file",
+        block: "module",
         source: "../../modules/vpc/main.tf",
         version: "",
         expectedSourceType: "path",
@@ -750,6 +803,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/14-security-cases.tf",
         moduleName: "userinfo_spoof_forced_git",
+        block: "module",
         source: "git::https://github.com@evil.com/a/b.git",
         version: "",
         expectedSourceType: "unknown",
@@ -764,6 +818,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/14-security-cases.tf",
         moduleName: "userinfo_spoof_https",
+        block: "module",
         source: "https://a.terraform.io@evil.com/x",
         version: "",
         expectedSourceType: "unknown",
@@ -778,6 +833,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/14-security-cases.tf",
         moduleName: "userinfo_spoof_schemeless",
+        block: "module",
         source: "a.terraform.io@evil.com/x",
         version: "",
         expectedSourceType: "unknown",
@@ -792,6 +848,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/03-registry-host.tf",
         moduleName: "public_registry_host_qualified",
+        block: "module",
         source: "registry.terraform.io/terraform-aws-modules/vpc/aws",
         version: "6.7.3",
         expectedSourceType: "registry",
@@ -807,6 +864,7 @@ export const MODULE_SOURCE_CORPUS: CorpusRow[] = [
         pageUrl:
             "https://github.com/NickSpaghetti/iac-module-linker-fixtures/blob/main/04-git-forced.tf",
         moduleName: "git_forced_beats_archive_extension",
+        block: "module",
         source: "git::https://example.com/repo.zip",
         version: "",
         expectedSourceType: "git:https",

@@ -17,9 +17,14 @@
     }: { module: DisplayModule; oncopy: (text: string) => void } = $props();
 
     const constraint = $derived(normalizeConstraint(module.versionConstraint));
-    const suggestion = $derived(suggestConstraint(module.versionConstraint, module.resolvedVersion));
-    // Checked again here, not only where it was resolved: a module can reach
-    // this row from the session cache, which stores whatever it was given.
+    const suggestion = $derived(
+        suggestConstraint({
+            constraint: module.versionConstraint,
+            resolvedVersion: module.resolvedVersion,
+        }),
+    );
+    // Checked again here, not only where it was resolved: a row read back from
+    // the cache or a content script is checked for shape, not for a safe url.
     const link = $derived(
         module.resolvedUrl !== null && isSafeHttpUrl(module.resolvedUrl) ? module.resolvedUrl : null,
     );

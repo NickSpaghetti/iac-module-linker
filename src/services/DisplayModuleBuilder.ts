@@ -8,10 +8,7 @@ import { isSafeHttpUrl } from "../util/UrlSafety";
 import { logRecovered } from "../util/Log";
 
 /**
- * @param uri The page the module was read from. Relative sources resolve
- * against it, so it has to be a real http address. A bad one is a programming
- * error rather than bad input, and every module on the page would be wrong,
- * so it throws.
+ * @param uri The page the module was read from, which relative sources resolve against.
  * @param terraformModule One declaration read out of the file.
  * @param moduleSourceLinker Shared by every module on the page.
  * @returns The row the popup and the content script render.
@@ -27,11 +24,10 @@ export const buildDisplayModuleAsync = async (
     }
 
     const module = emptyDisplayModule(terraformModule.moduleName);
-    module.versionConstraint = terraformModule.provider.version ?? "";
-    module.sourceLine = terraformModule.sourceLine;
-    module.sourceColumn = terraformModule.sourceColumn;
-    const source = terraformModule.provider.source;
-    if (source === undefined || source === "") {
+    module.versionConstraint = terraformModule.versionConstraint;
+    module.sourcePosition = terraformModule.sourcePosition;
+    const source = terraformModule.source;
+    if (source === "") {
         return module;
     }
 
@@ -46,14 +42,14 @@ export const buildDisplayModuleAsync = async (
     try {
         const link = await moduleSourceLinker.linkAsync(
             moduleSource,
-            terraformModule.moduleName,
+            terraformModule.block,
             module.versionConstraint,
             new URL(uri),
         );
         module.resolvedUrl = link.url;
         module.resolvedVersion = link.resolvedVersion;
     } catch (error) {
-        logRecovered(`could not build a link for ${source}`, error);
+        logRecovered("could not build a link", { source, error });
     }
     return module;
 };

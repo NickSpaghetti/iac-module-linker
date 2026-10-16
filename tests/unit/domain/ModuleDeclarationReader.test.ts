@@ -1,6 +1,7 @@
 import { expect } from "@jest/globals";
 import { readModuleDeclarations } from "../../../src/domain/ModuleDeclarationReader";
 import { TerraformModule } from "../../../src/types/Terraform";
+import { DECLARATION_BLOCKS } from "../../../src/types/ParsedDeclaration";
 
 describe("Given declarations from the parser", () => {
     describe("When each has every field", () => {
@@ -36,19 +37,19 @@ describe("Given declarations from the parser", () => {
             expect<TerraformModule[]>(declarations).toEqual([
                 {
                     moduleName: "vpc",
-                    terraformProperty: "module",
-                    provider: { source: "a/b/c", version: "~> 6.0" },
-                    sourceLine: 2,
-                    sourceColumn: 12,
+                    block: "module",
+                    source: "a/b/c",
+                    versionConstraint: "~> 6.0",
+                    sourcePosition: { line: 2, column: 12 },
                     writtenSource: "a/b/c",
                     sourceResolved: true,
                 },
                 {
                     moduleName: "required_providers.aws",
-                    terraformProperty: "required_providers",
-                    provider: { source: "hashicorp/aws", version: "" },
-                    sourceLine: 9,
-                    sourceColumn: 23,
+                    block: "required_providers",
+                    source: "hashicorp/aws",
+                    versionConstraint: "",
+                    sourcePosition: { line: 9, column: 23 },
                     writtenSource: "hashicorp/aws",
                     sourceResolved: true,
                 },
@@ -77,14 +78,31 @@ describe("Given declarations from the parser", () => {
             expect<TerraformModule[]>(declarations).toEqual([
                 {
                     moduleName: "vpc",
-                    terraformProperty: "module",
-                    provider: { source: "a/b/c", version: "" },
-                    sourceLine: null,
-                    sourceColumn: null,
+                    block: "module",
+                    source: "a/b/c",
+                    versionConstraint: "",
+                    sourcePosition: null,
                     writtenSource: "a/b/c",
                     sourceResolved: false,
                 },
             ]);
+        });
+    });
+
+    describe("When only one of the line and the column is a number", () => {
+        test("Then I expect no position, because a line alone cannot be placed", () => {
+            // Arrange
+            const declared = { name: "vpc", block: "module", source: "a/b/c" };
+            const emitted = [
+                { ...declared, line: 2 },
+                { ...declared, column: 12 },
+            ];
+
+            // Act
+            const declarations = readModuleDeclarations(emitted);
+
+            // Assert
+            expect(declarations.map((module) => module.sourcePosition)).toEqual([null, null]);
         });
     });
 
@@ -119,6 +137,22 @@ describe("Given declarations from the parser", () => {
 
             // Assert
             expect<TerraformModule[][]>(read).toEqual([[], [], [], [], []]);
+        });
+    });
+});
+
+describe("Given a declaration from every block type there is", () => {
+    describe("When they are read", () => {
+        test("Then I expect none dropped, because the check is derived from the same list", () => {
+            // Arrange
+            const blocks = Object.values(DECLARATION_BLOCKS);
+            const emitted = blocks.map((block) => ({ name: block, block, source: "a/b/c" }));
+
+            // Act
+            const read = readModuleDeclarations(emitted).map((declaration) => declaration.block);
+
+            // Assert
+            expect(read).toEqual(blocks);
         });
     });
 });

@@ -22,7 +22,7 @@ export const OPT_IN_ORIGINS: Record<SupportedPageHost, Nullable<string>> = {
  * @returns true if hostname is a supported page host exactly; otherwise, false.
  */
 export const isSupportedPageHost = (hostname: string): hostname is SupportedPageHost =>
-    (SUPPORTED_PAGE_HOSTS as readonly string[]).includes(hostname);
+    SUPPORTED_PAGE_HOSTS.some((host) => host === hostname);
 
 /**
  * Returns the match pattern a page host's access must be granted for.

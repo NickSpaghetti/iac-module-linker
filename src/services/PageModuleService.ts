@@ -37,7 +37,7 @@ export class PageModuleService {
         try {
             declared = await this.parserService.parseAsync(contents, this.page.getFileName());
         } catch (error) {
-            logRecovered("could not parse the file being viewed", error);
+            logRecovered("could not parse the file being viewed", { error });
             return [];
         }
 

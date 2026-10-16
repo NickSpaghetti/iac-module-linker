@@ -48,7 +48,6 @@ const takePrefix = (source: ModuleSource, rest: string): string => {
     }
 
     source.prefix = rest.slice(0, prefixAt);
-    setFlag(source, MODULE_SOURCE_FLAGS.HasPrefix);
     return rest.slice(prefixAt + PREFIX_SEPARATOR.length);
 };
 
@@ -64,7 +63,6 @@ const takeQuery = (source: ModuleSource, rest: string): string => {
         const value = params.get(name);
         if (value !== null && value !== "") {
             source.ref = value;
-            setFlag(source, MODULE_SOURCE_FLAGS.HasRef);
             break;
         }
     }

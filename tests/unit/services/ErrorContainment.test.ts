@@ -30,7 +30,7 @@ describe("Given a registry lookup that fails", () => {
             const source = classify(detect(split(UNKNOWN_MODULE)));
 
             // Act
-            const link = await linker.linkAsync(source, "m", "", PAGE);
+            const link = await linker.linkAsync(source, "module", "", PAGE);
 
             // Assert
             expect<Nullable<string>>(link.url).toBeNull();
@@ -42,10 +42,10 @@ describe("Given a registry lookup that fails", () => {
             // Arrange
             const module: TerraformModule = {
                 moduleName: "broken",
-                terraformProperty: "module",
-                sourceLine: null,
-                sourceColumn: null,
-                provider: { source: UNKNOWN_MODULE, version: "" },
+                block: "module",
+                sourcePosition: null,
+                source: UNKNOWN_MODULE,
+                versionConstraint: "",
                 writtenSource: UNKNOWN_MODULE,
                 sourceResolved: true,
             };
@@ -69,28 +69,28 @@ describe("Given a page with one broken module among good ones", () => {
             const modules: TerraformModule[] = [
                 {
                     moduleName: "good_git",
-                    terraformProperty: "module",
-                    sourceLine: null,
-                    sourceColumn: null,
-                    provider: { source: "git::https://github.com/a/b.git?ref=v1.0.0", version: "" },
+                    block: "module",
+                    sourcePosition: null,
+                    source: "git::https://github.com/a/b.git?ref=v1.0.0",
+                    versionConstraint: "",
                     writtenSource: "git::https://github.com/a/b.git?ref=v1.0.0",
                     sourceResolved: true,
                 },
                 {
                     moduleName: "broken",
-                    terraformProperty: "module",
-                    sourceLine: null,
-                    sourceColumn: null,
-                    provider: { source: UNKNOWN_MODULE, version: "" },
+                    block: "module",
+                    sourcePosition: null,
+                    source: UNKNOWN_MODULE,
+                    versionConstraint: "",
                     writtenSource: UNKNOWN_MODULE,
                     sourceResolved: true,
                 },
                 {
                     moduleName: "good_path",
-                    terraformProperty: "module",
-                    sourceLine: null,
-                    sourceColumn: null,
-                    provider: { source: "./modules/vpc", version: "" },
+                    block: "module",
+                    sourcePosition: null,
+                    source: "./modules/vpc",
+                    versionConstraint: "",
                     writtenSource: "./modules/vpc",
                     sourceResolved: true,
                 },

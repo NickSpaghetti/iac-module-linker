@@ -52,6 +52,35 @@ test("the popup lists the modules found on the page", async ({ context, extensio
     expect(text).toContain("git:https");
 });
 
+// The cache is cleared before each open, so every open is answered by the content script after its listener returns.
+test("the popup lists uncached modules again when opened a second time", async ({
+    context,
+    extensionId,
+}) => {
+    // Arrange
+    const clearCacheAsync = async () =>
+        await context
+            .serviceWorkers()[0]
+            .evaluate(async () => await chrome.storage.session.clear());
+    const page = await primeCacheAsync(context, "04-git-forced.tf");
+    await clearCacheAsync();
+    const first = await openPopupAsync(context, extensionId, page);
+    await expect
+        .poll(async () => await first.locator(ROW).count(), { timeout: 15_000 })
+        .toBeGreaterThan(0);
+    const listed = await first.locator(ROW).count();
+    await first.close();
+    await clearCacheAsync();
+
+    // Act
+    const second = await openPopupAsync(context, extensionId, page);
+
+    // Assert
+    await expect
+        .poll(async () => await second.locator(ROW).count(), { timeout: 15_000 })
+        .toBe(listed);
+});
+
 test("the popup labels a source it cannot link", async ({ context, extensionId }) => {
     // Arrange
     const page = await primeCacheAsync(context, "10-oci.tf");

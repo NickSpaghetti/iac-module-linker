@@ -45,11 +45,6 @@ export class ChromeStorageCache {
      * @returns How many entries were dropped.
      */
     async clearPrefixAsync(prefix: string): Promise<number> {
-        // `get(null)` returns every value as well as every key, so this reads
-        // the whole cache to build a list of strings, and it runs when that
-        // cache is at its largest. `getKeys` would avoid it and arrived in
-        // Chrome 130, above the 112 in `public/manifest.json`. Revisit if that
-        // floor rises. The cost is paid once per reset, not once per write.
         const all = await chrome.storage.session.get(null);
         const mine = Object.keys(all).filter((key) => key.startsWith(prefix));
         if (mine.length > 0) {

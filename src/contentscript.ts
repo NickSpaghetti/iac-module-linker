@@ -46,7 +46,7 @@ const linkModulesAsync = async (page: Page): Promise<() => Promise<void>> => {
         page.writer.linkSources(toSourceLinks(modules));
         return cacheAsync;
     } catch (error) {
-        logRecovered("could not link this page's modules", error);
+        logRecovered("could not link this page's modules", { error });
         return nothingToWrite;
     }
 };
@@ -63,33 +63,20 @@ const linkPageAsync = async (page: Page): Promise<void> => {
     const run = linkModulesAsync(page);
     linking = { url, run };
     const cacheAsync = await run;
-    // Shared only until the links are drawn. The write can wait up to
-    // COMMIT_SHA_TIMEOUT_MS for the header, and a scroll in that wait has
-    // lines of its own to link.
     if (linking?.run === run) {
         linking = null;
     }
     try {
         await cacheAsync();
     } catch (error) {
-        logRecovered("could not cache this page's modules", error);
+        logRecovered("could not cache this page's modules", { error });
     }
 };
 
 const SOURCE_RENDER_TIMEOUT_MS = 5000;
 const SOURCE_RENDER_POLL_MS = 250;
 
-/**
- * The header and the file body hydrate independently, and on a warm renderer
- * the body can win. The sources poll then returns at around 50ms while the
- * header is not up until around 170ms, so a single read came back empty for
- * about one file in seven and that file cached nothing.
- *
- * Measured across the fixtures, the header appears 0 to 172ms after the
- * document is ready. The deadline is short on purpose: the write now happens
- * after the links are drawn, so every millisecond of it is a millisecond in
- * which navigating away loses the entry.
- */
+/** How long to wait for the blob header to name the file's commit. */
 const COMMIT_SHA_TIMEOUT_MS = 500;
 const COMMIT_SHA_POLL_MS = 25;
 
@@ -97,28 +84,23 @@ const COMMIT_SHA_POLL_MS = 25;
 type Hydrated = { modules: DisplayModule[]; cacheAsync: () => Promise<void> };
 
 const findSourcesWhenRenderedAsync = async (page: Page): Promise<Nullable<DisplayModule[]>> =>
-    await pollUntilAsync(
-        async () => await page.modules.findSourcesAsync(window.location.href),
-        SOURCE_RENDER_TIMEOUT_MS,
-        SOURCE_RENDER_POLL_MS,
-    );
+    await pollUntilAsync({
+        read: async () => await page.modules.findSourcesAsync(window.location.href),
+        timeoutMs: SOURCE_RENDER_TIMEOUT_MS,
+        pollMs: SOURCE_RENDER_POLL_MS,
+    });
 
-/**
- * Caches the modules once the page says which commit they came from.
- * @param page The page the modules were read from.
- * @param key The entry to write.
- * @param modules What the page declared.
- */
+/** Caches the modules once the page says which commit they came from. */
 const cacheWhenIdentifiedAsync = async (
     page: Page,
     key: string,
     modules: DisplayModule[],
 ): Promise<void> => {
-    const sha = await pollUntilAsync(
-        () => page.reader.readCommitSha(),
-        COMMIT_SHA_TIMEOUT_MS,
-        COMMIT_SHA_POLL_MS,
-    );
+    const sha = await pollUntilAsync({
+        read: () => page.reader.readCommitSha(),
+        timeoutMs: COMMIT_SHA_TIMEOUT_MS,
+        pollMs: COMMIT_SHA_POLL_MS,
+    });
     if (sha === null) {
         return;
     }
@@ -132,7 +114,7 @@ const readCacheAsync = async (key: string): Promise<Nullable<unknown>> => {
     try {
         return await storageCache.getAsync(key);
     } catch (error) {
-        logRecovered("could not read the cache, so the page is read instead", error);
+        logRecovered("could not read the cache, so the page is read instead", { error });
         return null;
     }
 };
@@ -170,7 +152,6 @@ const LISTENING = "iacModuleLinkerIsListening";
 
 const isolatedWorld = globalThis as typeof globalThis & Record<string, true | undefined>;
 
-let shouldKeepChannelOpen = true; // Keep message channel open initially
 let scrollTimeout: NodeJS.Timeout;
 
 function listenToTabAndPage(page: Page): void {
@@ -185,30 +166,24 @@ function listenToTabAndPage(page: Page): void {
             return false;
         }
 
-        const handleMessage = (async () => {
+        const handleMessage = async () => {
             if (isBackgroundRefresh(message)) {
                 await linkPageAsync(page);
                 sendResponse([]);
-                return true;
+                return;
             }
 
             const { modules, cacheAsync } = await hydrateModulesAsync(page);
             sendResponse(modules);
-            await cacheAsync();
-            return false;
-        })();
-        handleMessage
-            .then((keepChannelOpen) => {
-                if (!keepChannelOpen) {
-                    sendResponse([]); // Ensure a response is sent if we're closing the channel
-                }
-                shouldKeepChannelOpen = keepChannelOpen ?? false;
-            })
-            .catch((err) => {
-                logRecovered("could not answer a tab message", err);
-                sendResponse([]);
-            });
-        return shouldKeepChannelOpen;
+            cacheAsync().catch((error) => logRecovered("could not cache the modules", { error }));
+        };
+        handleMessage().catch((err) => {
+            logRecovered("could not answer a tab message", { error: err });
+            sendResponse([]);
+        });
+        // Every answer from here on is sent after the listener returns, and
+        // chrome closes the channel unless it is told to keep it open.
+        return true;
     });
 
     document.addEventListener("scroll", () => {
@@ -226,5 +201,5 @@ if (site !== null && isolatedWorld[LISTENING] !== true) {
     listenToTabAndPage(page);
     // The background script's refresh can be lost on a cold start, when the
     // tab finishes loading before the worker is listening.
-    linkPageAsync(page).catch((error) => logRecovered("could not link this page", error));
+    linkPageAsync(page).catch((error) => logRecovered("could not link this page", { error }));
 }

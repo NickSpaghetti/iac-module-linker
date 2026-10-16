@@ -2,14 +2,8 @@
 const QUOTA_REFUSAL = "quota";
 
 /**
- * Reports whether a rejected storage write was refused for want of room.
- *
- * Chrome rejects with an Error reading "Session storage quota bytes exceeded"
- * and carries no code to test, so its message is the only thing available.
- *
- * Use this to decide what to report and not whether to recover. A caller that
- * only reset when this returned true would, the day the wording changes, leave
- * the cache full and stop caching for the rest of the session in silence.
+ * Reports whether a rejected storage write was refused for want of room. Use
+ * it to decide what to report, not whether to recover.
  * @param error Whatever the write rejected with.
  * @returns true if the message names a quota; otherwise, false.
  */

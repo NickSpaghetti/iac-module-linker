@@ -1,10 +1,13 @@
 import { MODULE_SOURCE_FLAGS, ModuleSource, hasFlag } from "../../types/ModuleSource";
 import { RegistryTarget } from "../../types/RegistryTarget";
+import { DECLARATION_BLOCKS, DeclarationBlock } from "../../types/ParsedDeclaration";
+import { SemverVersion } from "../../types/SemverVersion";
 import { PATH_SEPARATOR, lastSegment } from "../../util/PathHelpers";
-import { TERRAFORM_SYNTAX } from "../ModuleDeclarationReader";
+import { OPENTOFU_BROWSE_HOST, TERRAFORM_REGISTRY_HOST } from "../../util/Constants";
 
-export const DEFAULT_REGISTRY_HOST = "registry.terraform.io";
-export const OPENTOFU_REGISTRY_HOST = "registry.opentofu.org";
+/** The registry a source names when it names none. */
+export const DEFAULT_REGISTRY_HOST = TERRAFORM_REGISTRY_HOST;
+/** The version a registry route takes to mean its newest release. */
 export const LATEST_VERSION = "latest";
 
 const HASHICORP_NAMESPACE = "hashicorp";
@@ -18,16 +21,28 @@ export type RegistryLayout = {
     readonly submoduleRoute: string;
 };
 
+/** The path segment each target's browse pages sit under. Not the api's routes, which differ for OpenTofu. */
+const TERRAFORM_BROWSE_ROUTES: Record<RegistryTarget, string> = {
+    module: "modules",
+    provider: "providers",
+};
+const OPENTOFU_BROWSE_ROUTES: Record<RegistryTarget, string> = {
+    module: "module",
+    provider: "provider",
+};
+
+/** Where registry.terraform.io publishes module and provider pages. */
 export const TERRAFORM_LAYOUT: RegistryLayout = {
     browseHost: DEFAULT_REGISTRY_HOST,
-    routes: { module: "modules", provider: "providers" },
+    routes: TERRAFORM_BROWSE_ROUTES,
     submoduleRoute: "submodules",
 };
 
+/** Where OpenTofu publishes module and provider pages. */
 export const OPENTOFU_LAYOUT: RegistryLayout = {
     // Browsed on a different host from the one its api answers on.
-    browseHost: "search.opentofu.org",
-    routes: { module: "module", provider: "provider" },
+    browseHost: OPENTOFU_BROWSE_HOST,
+    routes: OPENTOFU_BROWSE_ROUTES,
     submoduleRoute: "submodule",
 };
 
@@ -48,11 +63,22 @@ export const isPrivateRegistryHost = (registryHost: string): boolean => {
 
 /**
  * Determines what kind of address a declaration names.
- * @param moduleName The declaration name.
+ * @param block The type of block the declaration is read from.
  * @returns "provider" for a `required_providers` entry; otherwise, "module".
  */
-export const registryTargetFor = (moduleName: string): RegistryTarget =>
-    moduleName.includes(TERRAFORM_SYNTAX.REQUIRED_PROVIDERS) ? "provider" : "module";
+export const registryTargetFor = (block: DeclarationBlock): RegistryTarget => {
+    switch (block) {
+        case DECLARATION_BLOCKS.REQUIRED_PROVIDERS:
+            return "provider";
+        case DECLARATION_BLOCKS.MODULE:
+        case DECLARATION_BLOCKS.TERRAFORM:
+            return "module";
+        default: {
+            const _exhaustive: never = block;
+            return _exhaustive;
+        }
+    }
+};
 
 /**
  * Converts a source path to a registry address.
@@ -92,7 +118,7 @@ export const registryPageUrl = (
     source: ModuleSource,
     target: RegistryTarget,
     address: string,
-    version: string,
+    version: SemverVersion | typeof LATEST_VERSION,
 ): string => {
     const base = `https://${layout.browseHost}/${layout.routes[target]}/${address}/${version}`;
     return hasFlag(source, MODULE_SOURCE_FLAGS.HasSubDirectory)

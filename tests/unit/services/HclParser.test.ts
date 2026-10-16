@@ -84,7 +84,7 @@ describe("Given the wasm parser is loaded", () => {
             const parsed = await HclParser.parseAsync("module {}", "main.tf");
 
             // Assert
-            expect<ParsedDeclaration[]>(parsed).toEqual([VPC]);
+            expect<unknown>(parsed).toEqual([VPC]);
         });
 
         test("Then I expect a JSON file handed to the same parser", async () => {
@@ -179,7 +179,7 @@ describe("Given the Go runtime registers the parser", () => {
             const parsed = await HclParser.parseAsync("module {}", "main.tf");
 
             // Assert
-            expect<ParsedDeclaration[]>(parsed).toEqual([]);
+            expect<unknown>(parsed).toEqual([]);
         });
     });
 });
@@ -206,7 +206,7 @@ describe("Given a load that already failed once", () => {
             const parsed = await HclParser.parseAsync("module {}", "main.tf");
 
             // Assert
-            expect<ParsedDeclaration[]>(parsed).toEqual([]);
+            expect<unknown>(parsed).toEqual([]);
         });
     });
 });

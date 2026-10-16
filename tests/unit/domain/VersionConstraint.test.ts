@@ -1,14 +1,16 @@
 import { expect } from "@jest/globals";
 import {
-    pinnedVersion,
+    CONSTRAINT_OUTCOMES,
     selectVersion,
     toVersionConstraint,
     TERRAFORM_VERSION_CONSTRAINTS,
 } from "../../../src/domain/VersionConstraint";
 import { normalizeConstraint } from "../../../src/domain/ConstraintClauses";
+import { semverVersionsOf } from "../../../src/domain/SemverVersion";
+import { Nullable } from "../../../src/types/Nullable";
 
 /** The versions the registry publishes in every case below. */
-const PUBLISHED = [
+const PUBLISHED = semverVersionsOf([
     "1.0.0",
     "1.2.0",
     "1.2.3",
@@ -20,22 +22,11 @@ const PUBLISHED = [
     "5.0.0",
     "5.4.0",
     "6.7.3",
-];
+]);
 
-/**
- * Picks the version a constraint selects out of the published set.
- * @param constraint The constraint as an author would write it.
- * @returns The version selected, or an empty string where none was.
- */
-const resolve = (constraint: string): string =>
+// The version a constraint selects out of the published set.
+const resolve = (constraint: string): Nullable<string> =>
     selectVersion(PUBLISHED, toVersionConstraint(constraint));
-
-/**
- * Reads the single version a constraint names.
- * @param constraint The constraint as an author would write it.
- * @returns That version, or an empty string where the constraint names a range.
- */
-const pin = (constraint: string): string => pinnedVersion(toVersionConstraint(constraint));
 
 describe("Given a version constraint", () => {
     describe("When the constraint is empty", () => {
@@ -44,7 +35,32 @@ describe("Given a version constraint", () => {
             const selected = resolve("");
 
             // Assert
-            expect<string>(selected).toBe("6.7.3");
+            expect<Nullable<string>>(selected).toBe("6.7.3");
+        });
+    });
+
+    describe("When the constraint is empty or only separators", () => {
+        test("Then I expect it read as any version", () => {
+            // Arrange
+            const constraints = ["", " ", " , "];
+
+            // Act
+            const outcomes = constraints.map(
+                (constraint) => toVersionConstraint(constraint).outcome,
+            );
+
+            // Assert
+            expect<string[]>(outcomes).toEqual(constraints.map(() => CONSTRAINT_OUTCOMES.ANY));
+        });
+    });
+
+    describe("When nothing published satisfies the constraint", () => {
+        test("Then I expect null rather than an empty string", () => {
+            // Act
+            const selected = resolve(">= 99.0.0");
+
+            // Assert
+            expect<Nullable<string>>(selected).toBeNull();
         });
     });
 
@@ -132,7 +148,7 @@ describe("Given a version constraint", () => {
             const selected = resolve("~> 1.2.3");
 
             // Assert
-            expect<string>(selected).toBe("1.2.3");
+            expect<Nullable<string>>(selected).toBe("1.2.3");
         });
     });
 
@@ -145,7 +161,7 @@ describe("Given a version constraint", () => {
             const resolved = constraints.map(resolve);
 
             // Assert
-            expect<string[]>(resolved).toEqual(constraints.map(() => "1.9.9"));
+            expect<Nullable<string>[]>(resolved).toEqual(constraints.map(() => "1.9.9"));
         });
     });
 
@@ -155,7 +171,7 @@ describe("Given a version constraint", () => {
             const selected = resolve(">=2.0.0,<3.0.0");
 
             // Assert
-            expect<string>(selected).toBe("2.4.0");
+            expect<Nullable<string>>(selected).toBe("2.4.0");
         });
     });
 
@@ -165,7 +181,7 @@ describe("Given a version constraint", () => {
             const selected = resolve(">= 1.0.0, <= 1.2.3, != 1.2.3");
 
             // Assert
-            expect<string>(selected).toBe("1.2.0");
+            expect<Nullable<string>>(selected).toBe("1.2.0");
         });
 
         test("Then I expect an exclusion alone to leave every other version open", () => {
@@ -173,7 +189,7 @@ describe("Given a version constraint", () => {
             const selected = resolve("!= 6.7.3");
 
             // Assert
-            expect<string>(selected).toBe("5.4.0");
+            expect<Nullable<string>>(selected).toBe("5.4.0");
         });
     });
 
@@ -183,8 +199,15 @@ describe("Given a version constraint", () => {
             const constraint = toVersionConstraint(">= 5.0.0-beta1");
 
             // Assert
-            expect<boolean>(constraint.recognized).toBe(true);
-            expect<string>(constraint.comparators[0].version).toBe("5.0.0-beta1");
+            expect(constraint).toEqual({
+                outcome: CONSTRAINT_OUTCOMES.BOUNDED,
+                comparators: [
+                    {
+                        operator: TERRAFORM_VERSION_CONSTRAINTS.GREATER_THAN_OR_EQUAL,
+                        version: "5.0.0-beta1",
+                    },
+                ],
+            });
         });
     });
 
@@ -195,12 +218,17 @@ describe("Given a version constraint", () => {
 
             // Act
             const read = npmRanges.map((npmRange) => ({
-                recognized: toVersionConstraint(npmRange).recognized,
+                outcome: toVersionConstraint(npmRange).outcome,
                 selected: resolve(npmRange),
             }));
 
             // Assert
-            expect(read).toEqual(npmRanges.map(() => ({ recognized: false, selected: "" })));
+            expect(read).toEqual(
+                npmRanges.map(() => ({
+                    outcome: CONSTRAINT_OUTCOMES.UNRECOGNIZED,
+                    selected: null,
+                })),
+            );
         });
 
         test("Then I expect one bad clause to reject the whole conjunction", () => {
@@ -208,7 +236,25 @@ describe("Given a version constraint", () => {
             const constraint = toVersionConstraint(">= 1.0.0, ^2.0.0");
 
             // Assert
-            expect<boolean>(constraint.recognized).toBe(false);
+            expect<string>(constraint.outcome).toBe(CONSTRAINT_OUTCOMES.UNRECOGNIZED);
+        });
+    });
+
+    describe("When a pessimistic bound would pass the largest safe integer", () => {
+        test("Then I expect the constraint unrecognized rather than a throw", () => {
+            // Arrange
+            const largest = Number.MAX_SAFE_INTEGER;
+            const constraints = [`~> 1.${largest}.0`, `~> ${largest}`];
+
+            // Act
+            const outcomes = constraints.map(
+                (constraint) => toVersionConstraint(constraint).outcome,
+            );
+
+            // Assert
+            expect<string[]>(outcomes).toEqual(
+                constraints.map(() => CONSTRAINT_OUTCOMES.UNRECOGNIZED),
+            );
         });
     });
 
@@ -218,57 +264,14 @@ describe("Given a version constraint", () => {
             const constraints = ["banana", ">= banana"];
 
             // Act
-            const recognized = constraints.map(
-                (constraint) => toVersionConstraint(constraint).recognized,
+            const outcomes = constraints.map(
+                (constraint) => toVersionConstraint(constraint).outcome,
             );
 
             // Assert
-            expect<boolean[]>(recognized).toEqual(constraints.map(() => false));
-        });
-    });
-});
-
-describe("Given a constraint a link has to name a version for", () => {
-    describe("When the constraint names one version", () => {
-        test("Then I expect that version", () => {
-            // Arrange
-            const cases = [
-                { constraint: "3.0.0", pinned: "3.0.0" },
-                { constraint: "= 3.0.0", pinned: "3.0.0" },
-                { constraint: "5.0", pinned: "5.0.0" },
-            ];
-
-            // Act
-            const pinned = cases.map(({ constraint }) => ({
-                constraint,
-                pinned: pin(constraint),
-            }));
-
-            // Assert
-            expect(pinned).toEqual(cases);
-        });
-    });
-
-    describe("When the constraint names a range", () => {
-        test("Then I expect nothing to pin to", () => {
-            // Arrange
-            const constraints = [">= 3.0.0", "~> 1.2.3", ">= 1.0, < 2.0", ""];
-
-            // Act
-            const pinned = constraints.map(pin);
-
-            // Assert
-            expect<string[]>(pinned).toEqual(constraints.map(() => ""));
-        });
-    });
-
-    describe("When the constraint is not terraform's", () => {
-        test("Then I expect nothing to pin to", () => {
-            // Act
-            const pinned = pin("^1.2.3");
-
-            // Assert
-            expect<string>(pinned).toBe("");
+            expect<string[]>(outcomes).toEqual(
+                constraints.map(() => CONSTRAINT_OUTCOMES.UNRECOGNIZED),
+            );
         });
     });
 });

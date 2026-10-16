@@ -9,9 +9,7 @@ export const lastSegment = (path: string): string =>
     path.split(PATH_SEPARATOR).filter(Boolean).pop() ?? "";
 
 /**
- * Determines whether a path names a file.
- *
- * A dot in the final segment means a file. Directories rarely carry one.
+ * Determines whether a path names a file, by a dot in its final segment.
  * @param path A path to classify.
  * @returns true if it names a file; otherwise, false.
  */

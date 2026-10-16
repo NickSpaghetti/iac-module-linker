@@ -36,7 +36,7 @@ export class GitHubPageDataAccess implements IPageDataAccess {
      * apart from a stale one.
      */
     public readCommitSha(): Nullable<string> {
-        const link = document.querySelector(COMMIT_LINK) as Nullable<HTMLAnchorElement>;
+        const link = document.querySelector(COMMIT_LINK);
         const sha = link?.getAttribute("href")?.split(COMMIT_SEPARATOR)[1];
         return sha === undefined || sha === "" ? null : sha;
     }
@@ -47,10 +47,8 @@ export class GitHubPageDataAccess implements IPageDataAccess {
      * it rendered, or it stays empty for as long as the cache lives.
      */
     public readSourceTextAsync(): Promise<Nullable<string>> {
-        const element = document.getElementById(
-            SOURCE_TEXT_AREA_ID,
-        ) as Nullable<HTMLTextAreaElement>;
-        const text = element?.value;
+        const element = document.getElementById(SOURCE_TEXT_AREA_ID);
+        const text = element instanceof HTMLTextAreaElement ? element.value : undefined;
         return Promise.resolve(text === undefined || text === "" ? null : text);
     }
 }
