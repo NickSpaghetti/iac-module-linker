@@ -760,9 +760,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-Go standard library, runtime and wasm_exec.js go1.27.1
+Go standard library, runtime and wasm_exec.js go1.27.3
 License: BSD-3-Clause
-Source: https://go.dev/dl/go1.27.1.src.tar.gz
+Source: https://go.dev/dl/go1.27.3.src.tar.gz
 ==============================================================================
 
 Copyright 2009 The Go Authors.
